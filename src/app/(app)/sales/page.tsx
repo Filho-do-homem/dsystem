@@ -10,6 +10,8 @@ import type { Sale, ScannedItem, Product } from "@/types";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable, type ColumnDefinition } from "@/components/common/DataTable";
 import {
   Table,
@@ -212,7 +214,7 @@ export default function SalesPage() {
       toast({ title: "Sucesso Parcial ou Total", description: `${successCount} tipo(s) de produto(s) vendido(s) com sucesso.` });
     }
     if (errorCount === 0 && successCount > 0) {
-        setScannedItems([]); // Clear list only if all items were processed without error or some were successful
+        setScannedItems([]); 
     } else if (errorCount > 0 && successCount === 0) {
         toast({variant: "destructive", title: "Falha na Venda", description: "Nenhum produto foi vendido. Verifique os erros."})
     }
@@ -256,7 +258,7 @@ export default function SalesPage() {
       <PageHeader title="Vendas" description="Registre novas vendas e veja o histórico de transações.">
         <Button 
           onClick={() => {
-            setActiveTab("manual"); // Ensure manual tab is active for the dialog
+            setActiveTab("manual"); 
             setIsModalOpen(true);
           }} 
           className="bg-accent hover:bg-accent/90 text-accent-foreground"
@@ -492,37 +494,4 @@ export default function SalesPage() {
   );
 }
 
-interface CardProps extends React.HTMLAttributes<HTMLDivElement> {}
-const Card: React.FC<CardProps> = ({ className, children, ...props }) => (
-  <div className={cn("rounded-lg border bg-card text-card-foreground shadow-sm", className)} {...props}>
-    {children}
-  </div>
-);
-
-interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {}
-const CardHeader: React.FC<CardHeaderProps> = ({ className, children, ...props }) => (
-  <div className={cn("flex flex-col space-y-1.5 p-6", className)} {...props}>
-    {children}
-  </div>
-);
-
-interface CardTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {}
-const CardTitle: React.FC<CardTitleProps> = ({ className, children, ...props }) => (
-  <h3 className={cn("text-2xl font-semibold leading-none tracking-tight", className)} {...props}>
-    {children}
-  </h3>
-);
-
-interface CardDescriptionProps extends React.HTMLAttributes<HTMLParagraphElement> {}
-const CardDescription: React.FC<CardDescriptionProps> = ({ className, children, ...props }) => (
-  <p className={cn("text-sm text-muted-foreground", className)} {...props}>
-    {children}
-  </p>
-);
-
-interface CardContentProps extends React.HTMLAttributes<HTMLDivElement> {}
-const CardContent: React.FC<CardContentProps> = ({ className, children, ...props }) => (
-  <div className={cn("p-6 pt-0", className)} {...props}>
-    {children}
-  </div>
-);
+    
