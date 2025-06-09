@@ -24,6 +24,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar"
 import { Button } from '@/components/ui/button'
+import { SheetTitle } from "@/components/ui/sheet" // Added import
 import { useSidebar } from "@/components/ui/sidebar"
 import type React from 'react';
 
@@ -73,7 +74,9 @@ export function SidebarNav() {
       <SidebarHeader className="p-4 flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
           <DSIcon className="h-7 w-7 text-primary" />
-          <h1 className="text-xl font-semibold font-headline">D'System</h1>
+          <SheetTitle asChild>
+            <h1 className="text-xl font-semibold font-headline">D'System</h1>
+          </SheetTitle>
         </Link>
         {isMobile && (
           <Button variant="ghost" size="icon" onClick={toggleSidebar}>
