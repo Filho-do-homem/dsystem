@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAppContext } from "@/contexts/AppContext";
@@ -107,7 +108,6 @@ export default function DashboardPage() {
           height={300} 
           className="mx-auto rounded-lg shadow-md"
         />
-        <p className="mt-4 text-muted-foreground font-headline">CraftFlow ajuda você a gerenciar suas criações artesanais com facilidade.</p>
       </div>
     </div>
   );
