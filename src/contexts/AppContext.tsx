@@ -18,6 +18,7 @@ interface AppContextType {
   addSale: (saleData: Omit<Sale, 'id' | 'createdAt' | 'totalAmount' | 'productName'>) => Sale | null;
   addNota: (notaData: Omit<Nota, 'id' | 'createdAt' | 'productName'>) => Nota;
   getProductById: (productId: string) => Product | undefined;
+  getProductByBarcode: (barcode: string) => Product | undefined;
   updateProduct: (updatedProduct: Product) => void;
 }
 
@@ -32,7 +33,6 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   useEffect(() => {
     setProducts(MOCK_PRODUCTS);
-    // Sort all date-based arrays initially
     setStockAdjustments(MOCK_STOCK_ADJUSTMENTS.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setSales(MOCK_SALES.sort((a,b) => new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime()));
     setNotas(MOCK_NOTAS.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
@@ -41,6 +41,10 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   
   const getProductById = useCallback((productId: string) => {
     return products.find(p => p.id === productId);
+  }, [products]);
+
+  const getProductByBarcode = useCallback((barcode: string) => {
+    return products.find(p => p.barcode === barcode);
   }, [products]);
 
   const updateProduct = useCallback((updatedProduct: Product) => {
@@ -53,23 +57,20 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const newProduct: Product = {
       ...productData,
       id: generateId(),
-      currentStock: 0, // Initial stock will be set by the stock adjustment
+      barcode: productData.barcode || undefined,
+      currentStock: 0, 
       createdAt: new Date().toISOString(),
     };
     setProducts(prev => [...prev, newProduct]);
 
-    // Add initial stock as a stock adjustment
-    if (productData.initialStock !== 0) { // Allow 0 initial stock
+    if (productData.initialStock !== 0) { 
         const initialAdjustment: Omit<StockAdjustment, 'id' | 'createdAt' | 'productName'> = {
             productId: newProduct.id,
             quantityChange: productData.initialStock,
             reason: "Estoque Inicial",
             date: newProduct.createdAt,
         };
-        // Use addStockAdjustment to ensure product stock is updated correctly
-        // Need to pass full product list to addStockAdjustment or getProductById inside it must work with state updates
-        // For simplicity, directly call setStockAdjustments and updateProduct here for initial setup
-        const productForAdjustment = newProduct; // The product we just created
+        const productForAdjustment = newProduct;
         const fullInitialAdjustment: StockAdjustment = {
             ...initialAdjustment,
             id: generateId(),
@@ -98,7 +99,14 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
     setStockAdjustments(prev => [...prev, newAdjustment].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     
-    const updatedProduct = { ...product, currentStock: product.currentStock + adjustmentData.quantityChange };
+    const updatedStock = product.currentStock + adjustmentData.quantityChange;
+    if (updatedStock < 0) {
+        // Prevent stock from going negative beyond what a sale might cause
+        // This specific error might be better handled by the calling function (e.g. addSale)
+        // For direct adjustments, we might allow it, but sales should check first.
+        console.warn(`Ajuste resultaria em estoque negativo para ${product.name}. Estoque atual: ${product.currentStock}, Mudança: ${adjustmentData.quantityChange}`);
+    }
+    const updatedProduct = { ...product, currentStock: updatedStock };
     updateProduct(updatedProduct);
     return newAdjustment;
   }, [getProductById, updateProduct]);
@@ -118,12 +126,11 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
     setNotas(prev => [...prev, newNota].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     
-    // This will also update the product's stock
     addStockAdjustment({
       productId: notaData.productId,
-      quantityChange: notaData.quantity, // Quantity from the note is the positive change
+      quantityChange: notaData.quantity, 
       reason: "Entrada por Nota",
-      date: notaData.date, // Date of the note event
+      date: notaData.date, 
     });
     
     return newNota;
@@ -134,11 +141,10 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const product = getProductById(saleData.productId);
     if (!product) {
       console.error("Produto não encontrado para venda");
-      return null;
+      throw new Error("Produto não encontrado para registrar a venda.");
     }
     if (product.currentStock < saleData.quantitySold) {
       console.error("Estoque insuficiente para venda");
-      // Consider throwing an error to be caught by the UI for better feedback
       throw new Error(`Estoque insuficiente para ${product.name}. Disponível: ${product.currentStock}`);
     }
 
@@ -151,11 +157,10 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
     setSales(prev => [...prev, newSale].sort((a,b) => new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime()));
 
-    // This will also update the product's stock
     addStockAdjustment({
         productId: saleData.productId,
-        quantityChange: -saleData.quantitySold, // Negative for sale
-        reason: `Venda ID: ${newSale.id.substring(0,4)}`, // More specific reason
+        quantityChange: -saleData.quantitySold, 
+        reason: `Venda ID: ${newSale.id.substring(0,4)}`,
         date: saleData.saleDate,
     });
     return newSale;
@@ -177,6 +182,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         addSale, 
         addNota, 
         getProductById, 
+        getProductByBarcode,
         updateProduct 
     }}>
       {children}

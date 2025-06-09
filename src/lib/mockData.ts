@@ -12,6 +12,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: 'prod_1',
     name: 'Vela Sonho de Lavanda',
     type: 'Vela',
+    barcode: '1234567890123',
     costPrice: 5.00,
     sellingPrice: 15.00,
     currentStock: 0, 
@@ -21,6 +22,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: 'prod_2',
     name: 'Creme de Mãos Manteiga de Karité',
     type: 'Creme',
+    barcode: '2345678901234',
     costPrice: 3.50,
     sellingPrice: 12.00,
     currentStock: 0, 
@@ -30,6 +32,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: 'prod_3',
     name: 'Perfume Pétalas de Rosa',
     type: 'Perfume',
+    barcode: '3456789012345',
     costPrice: 8.00,
     sellingPrice: 25.00,
     currentStock: 0, 
@@ -39,6 +42,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: 'prod_4',
     name: 'Sabonete Fava de Baunilha',
     type: 'Sabonete',
+    barcode: '4567890123456',
     costPrice: 2.00,
     sellingPrice: 8.00,
     currentStock: 0, 
@@ -164,11 +168,6 @@ export const MOCK_NOTAS: Nota[] = [
 
   // Apply stock entries from Notas
   MOCK_NOTAS.forEach(nota => {
-    // This adjustment will also be added to MOCK_STOCK_ADJUSTMENTS by AppContext logic if we were running it live.
-    // For mock setup, we ensure the product stock reflects these entries initially.
-    // To avoid double counting if AppContext also adds an adjustment for mock Notas:
-    // Let's assume AppContext will create these specific adjustments if addNota is called for mock data.
-    // So, we add them to MOCK_STOCK_ADJUSTMENTS to be consistent with AppContext behavior.
     const existingAdjustmentForNota = MOCK_STOCK_ADJUSTMENTS.find(
       sa => sa.productId === nota.productId && sa.date === nota.date && sa.quantityChange === nota.quantity && sa.reason === "Entrada por Nota"
     );
@@ -190,6 +189,17 @@ export const MOCK_NOTAS: Nota[] = [
   // Deduct sales from stock
   MOCK_SALES.forEach(sale => {
     productStockMap.set(sale.productId, (productStockMap.get(sale.productId) || 0) - sale.quantitySold);
+    // Add stock adjustment for sale
+    const saleAdjustment: StockAdjustment = {
+      id: generateId(),
+      productId: sale.productId,
+      productName: sale.productName,
+      quantityChange: -sale.quantitySold,
+      reason: `Venda ID: ${sale.id.substring(0,4)}`,
+      date: sale.saleDate,
+      createdAt: sale.createdAt,
+    };
+    MOCK_STOCK_ADJUSTMENTS.push(saleAdjustment);
   });
 
   // Update product currentStock

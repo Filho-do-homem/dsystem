@@ -3,6 +3,7 @@ export interface Product {
   id: string;
   name: string;
   type: string; // e.g., Candle, Cream, Perfume
+  barcode?: string; // Optional barcode field
   costPrice: number;
   sellingPrice: number;
   currentStock: number;
@@ -46,4 +47,10 @@ export interface SummaryCardData {
   value: string | number;
   icon: React.ElementType;
   description?: string;
+}
+
+// For items scanned via barcode in the sales page
+export interface ScannedItem {
+  product: Product;
+  quantity: number;
 }

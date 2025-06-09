@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -27,12 +28,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { PlusCircle, Edit2 } from "lucide-react";
+import { PlusCircle, Edit2, ScanBarcode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const productSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").max(100, "Nome muito longo"),
   type: z.string().min(1, "Tipo é obrigatório").max(50, "Tipo muito longo"),
+  barcode: z.string().max(50, "Código de barras muito longo").optional().or(z.literal('')),
   costPrice: z.coerce.number().min(0, "Preço de custo deve ser não-negativo"),
   sellingPrice: z.coerce.number().min(0, "Preço de venda deve ser não-negativo"),
   initialStock: z.coerce.number().int().min(0, "Estoque inicial deve ser um inteiro não-negativo"),
@@ -51,6 +53,7 @@ export default function ProductsPage() {
     defaultValues: {
       name: "",
       type: "",
+      barcode: "",
       costPrice: 0,
       sellingPrice: 0,
       initialStock: 0,
@@ -62,12 +65,13 @@ export default function ProductsPage() {
       form.reset({
         name: editingProduct.name,
         type: editingProduct.type,
+        barcode: editingProduct.barcode || "",
         costPrice: editingProduct.costPrice,
         sellingPrice: editingProduct.sellingPrice,
         initialStock: editingProduct.currentStock, 
       });
     } else {
-      form.reset();
+      form.reset({ name: "", type: "", barcode: "", costPrice: 0, sellingPrice: 0, initialStock: 0 });
     }
   }, [editingProduct, form, isModalOpen]);
 
@@ -78,6 +82,7 @@ export default function ProductsPage() {
         const updated: Product = {
           ...editingProduct,
           ...data,
+          barcode: data.barcode || undefined, // Store as undefined if empty
           currentStock: data.initialStock 
         };
         updateProduct(updated);
@@ -86,6 +91,7 @@ export default function ProductsPage() {
         addProduct({
           name: data.name,
           type: data.type,
+          barcode: data.barcode || undefined,
           costPrice: data.costPrice,
           sellingPrice: data.sellingPrice,
           initialStock: data.initialStock,
@@ -94,7 +100,7 @@ export default function ProductsPage() {
       }
       setIsModalOpen(false);
       setEditingProduct(null);
-      form.reset();
+      form.reset({ name: "", type: "", barcode: "", costPrice: 0, sellingPrice: 0, initialStock: 0 });
     } catch (error) {
       toast({ variant: "destructive", title: "Erro", description: "Falha ao salvar produto." });
       console.error(error);
@@ -109,6 +115,11 @@ export default function ProductsPage() {
   const columns: ColumnDefinition<Product>[] = [
     { accessorKey: "name", header: "Nome" },
     { accessorKey: "type", header: "Tipo" },
+    { 
+      accessorKey: "barcode", 
+      header: "Cód. Barras",
+      cell: (row) => row.barcode || "N/A"
+    },
     { 
       accessorKey: "costPrice", 
       header: "Preço de Custo",
@@ -153,10 +164,10 @@ export default function ProductsPage() {
         setIsModalOpen(isOpen);
         if (!isOpen) {
           setEditingProduct(null);
-          form.reset();
+          form.reset({ name: "", type: "", barcode: "", costPrice: 0, sellingPrice: 0, initialStock: 0 });
         }
       }}>
-        <DialogContent className="sm:max-w-[425px] bg-card">
+        <DialogContent className="sm:max-w-lg bg-card">
           <DialogHeader>
             <DialogTitle className="font-headline">{editingProduct ? "Editar Produto" : "Adicionar Novo Produto"}</DialogTitle>
             <DialogDescription>
@@ -186,6 +197,22 @@ export default function ProductsPage() {
                     <FormLabel>Tipo do Produto</FormLabel>
                     <FormControl>
                       <Input placeholder="ex.: Vela, Creme, Perfume" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="barcode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Código de Barras (Opcional)</FormLabel>
+                    <FormControl>
+                      <div className="flex items-center gap-2">
+                        <ScanBarcode className="h-5 w-5 text-muted-foreground" />
+                        <Input placeholder="Digite ou escaneie o código" {...field} />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
