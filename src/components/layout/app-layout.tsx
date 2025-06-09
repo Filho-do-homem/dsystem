@@ -20,7 +20,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     <span className="sr-only">Alternar menu de navegação</span>
                   </Button>
                 </SidebarTrigger>
-                <h1 className="text-lg font-semibold font-headline">CraftFlow</h1>
+                <h1 className="text-lg font-semibold font-headline">D'System</h1>
             </header>
             <main className="flex-1 p-4 md:p-6 overflow-auto">
               {children}

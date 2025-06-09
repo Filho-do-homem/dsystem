@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'CraftFlow',
+  title: "D'System",
   description: 'Gerenciamento de estoque para produtos artesanais',
 };
 

@@ -9,8 +9,7 @@ import {
   ArchiveRestore, 
   ShoppingCart, 
   BarChartHorizontalBig,
-  FileText, // Added for Notas
-  Blend,
+  FileText,
   type LucideIcon
 } from "lucide-react"
 
@@ -24,8 +23,9 @@ import {
   SidebarMenuButton,
   SidebarFooter,
 } from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button" // SidebarTrigger no longer here
+import { Button } from '@/components/ui/button'
 import { useSidebar } from "@/components/ui/sidebar"
+import type React from 'react';
 
 interface NavItem {
   href: string
@@ -42,6 +42,27 @@ const navItems: NavItem[] = [
   { href: "/stock-levels", label: "Níveis de Estoque", icon: BarChartHorizontalBig },
 ]
 
+const DSIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    viewBox="0 0 60 60"
+    xmlns="http://www.w3.org/2000/svg"
+    stroke="currentColor"
+    strokeWidth="6"
+    fill="none"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    {/* S Part 1 (Top curve, appears to go behind D) */}
+    <path d="M50 12c-15 0-15 15-25 15" />
+    {/* D Shape (Drawn after first part of S, so S appears to go into D) */}
+    <path d="M15 50V10h20a20 20 0 1 1 0 40H15z" />
+    {/* S Part 2 (Bottom curve, exits D. Drawn over D to appear on top) */}
+    <path d="M25 27c-10 0-10 15 5 15h20" />
+  </svg>
+);
+
+
 export function SidebarNav() {
   const pathname = usePathname()
   const { isMobile, toggleSidebar } = useSidebar();
@@ -51,8 +72,8 @@ export function SidebarNav() {
     <Sidebar variant="sidebar" collapsible={isMobile ? "offcanvas" : "icon"}>
       <SidebarHeader className="p-4 flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
-          <Blend className="h-7 w-7 text-primary" />
-          <h1 className="text-xl font-semibold font-headline">CraftFlow</h1>
+          <DSIcon className="h-7 w-7 text-primary" />
+          <h1 className="text-xl font-semibold font-headline">D'System</h1>
         </Link>
         {isMobile && (
           <Button variant="ghost" size="icon" onClick={toggleSidebar}>
@@ -80,7 +101,7 @@ export function SidebarNav() {
       </SidebarContent>
       <SidebarFooter className="p-2 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center">
          <div className="p-2 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-           © {new Date().getFullYear()} CraftFlow
+           © {new Date().getFullYear()} D'System
          </div>
       </SidebarFooter>
     </Sidebar>
