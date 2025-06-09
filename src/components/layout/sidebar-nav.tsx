@@ -47,16 +47,18 @@ const DSIcon = (props: React.SVGProps<SVGSVGElement>) => (
     viewBox="0 0 60 60"
     xmlns="http://www.w3.org/2000/svg"
     stroke="currentColor"
-    strokeWidth="5"
+    strokeWidth="4.5"
     fill="none"
     strokeLinecap="round"
     strokeLinejoin="round"
     {...props}
   >
-    {/* D Shape */}
-    <path d="M 22.5 10 V 30 C 37.5 30 37.5 10 22.5 10 Z" />
-    {/* S Shape connected below D */}
-    <path d="M 22.5 30 C 37.5 30 37.5 40 22.5 40 C 7.5 40 7.5 50 22.5 50" />
+    {/* D shape Path */}
+    <path d="M15 8 V 52 H30 C45 52 50 42 50 30 C50 18 45 8 30 8 H15 Z" />
+    {/* S shape Path (centerline) */}
+    <path d="M38 22 H28 Q25 22 25 25 V28 Q25 31 28 31 H36 Q39 31 39 34 V37 Q39 40 36 40 H26" />
+    {/* Apostrophe-like square element Path */}
+    <path d="M49 5 h5 v5 h-5 Z" />
   </svg>
 );
 
