@@ -8,38 +8,38 @@ const twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString();
 export const MOCK_PRODUCTS: Product[] = [
   {
     id: 'prod_1',
-    name: 'Lavender Dream Candle',
-    type: 'Candle',
+    name: 'Vela Sonho de Lavanda',
+    type: 'Vela',
     costPrice: 5.00,
     sellingPrice: 15.00,
-    currentStock: 50,
+    currentStock: 0, // Initialized by the IIFE below
     createdAt: twoDaysAgo,
   },
   {
     id: 'prod_2',
-    name: 'Shea Butter Hand Cream',
-    type: 'Cream',
+    name: 'Creme de Mãos Manteiga de Karité',
+    type: 'Creme',
     costPrice: 3.50,
     sellingPrice: 12.00,
-    currentStock: 30,
+    currentStock: 0, // Initialized by the IIFE below
     createdAt: yesterday,
   },
   {
     id: 'prod_3',
-    name: 'Rose Petal Perfume',
+    name: 'Perfume Pétalas de Rosa',
     type: 'Perfume',
     costPrice: 8.00,
     sellingPrice: 25.00,
-    currentStock: 20,
+    currentStock: 0, // Initialized by the IIFE below
     createdAt: today,
   },
   {
     id: 'prod_4',
-    name: 'Vanilla Bean Soap',
-    type: 'Soap',
+    name: 'Sabonete Fava de Baunilha',
+    type: 'Sabonete',
     costPrice: 2.00,
     sellingPrice: 8.00,
-    currentStock: 75,
+    currentStock: 0, // Initialized by the IIFE below
     createdAt: twoDaysAgo,
   },
 ];
@@ -48,45 +48,45 @@ export const MOCK_STOCK_ADJUSTMENTS: StockAdjustment[] = [
   {
     id: generateId(),
     productId: 'prod_1',
-    productName: 'Lavender Dream Candle',
+    productName: 'Vela Sonho de Lavanda',
     quantityChange: 50,
-    reason: 'Initial Stock',
+    reason: 'Estoque Inicial',
     date: twoDaysAgo,
     createdAt: twoDaysAgo,
   },
   {
     id: generateId(),
     productId: 'prod_2',
-    productName: 'Shea Butter Hand Cream',
+    productName: 'Creme de Mãos Manteiga de Karité',
     quantityChange: 30,
-    reason: 'Initial Stock',
+    reason: 'Estoque Inicial',
     date: yesterday,
     createdAt: yesterday,
   },
    {
     id: generateId(),
     productId: 'prod_3',
-    productName: 'Rose Petal Perfume',
+    productName: 'Perfume Pétalas de Rosa',
     quantityChange: 20,
-    reason: 'Initial Stock',
+    reason: 'Estoque Inicial',
     date: today,
     createdAt: today,
   },
   {
     id: generateId(),
     productId: 'prod_4',
-    productName: 'Vanilla Bean Soap',
+    productName: 'Sabonete Fava de Baunilha',
     quantityChange: 75,
-    reason: 'Initial Stock',
+    reason: 'Estoque Inicial',
     date: twoDaysAgo,
     createdAt: twoDaysAgo,
   },
   {
     id: generateId(),
     productId: 'prod_1',
-    productName: 'Lavender Dream Candle',
+    productName: 'Vela Sonho de Lavanda',
     quantityChange: 25,
-    reason: 'New Batch',
+    reason: 'Novo Lote',
     date: today,
     createdAt: today,
   },
@@ -96,7 +96,7 @@ export const MOCK_SALES: Sale[] = [
   {
     id: generateId(),
     productId: 'prod_1',
-    productName: 'Lavender Dream Candle',
+    productName: 'Vela Sonho de Lavanda',
     quantitySold: 2,
     pricePerItem: 15.00,
     totalAmount: 30.00,
@@ -106,7 +106,7 @@ export const MOCK_SALES: Sale[] = [
   {
     id: generateId(),
     productId: 'prod_2',
-    productName: 'Shea Butter Hand Cream',
+    productName: 'Creme de Mãos Manteiga de Karité',
     quantitySold: 1,
     pricePerItem: 12.00,
     totalAmount: 12.00,
@@ -116,7 +116,7 @@ export const MOCK_SALES: Sale[] = [
   {
     id: generateId(),
     productId: 'prod_4',
-    productName: 'Vanilla Bean Soap',
+    productName: 'Sabonete Fava de Baunilha',
     quantitySold: 5,
     pricePerItem: 8.00,
     totalAmount: 40.00,
@@ -129,18 +129,21 @@ export const MOCK_SALES: Sale[] = [
 (() => {
   const productStockMap = new Map<string, number>();
 
+  // Initialize stock based on "Estoque Inicial" adjustments
   MOCK_STOCK_ADJUSTMENTS.forEach(adj => {
-    if (adj.reason === 'Initial Stock') {
+    if (adj.reason === 'Estoque Inicial') {
       productStockMap.set(adj.productId, (productStockMap.get(adj.productId) || 0) + adj.quantityChange);
     }
   });
   
+  // Set initial stock for products
   MOCK_PRODUCTS.forEach(p => {
     p.currentStock = productStockMap.get(p.id) || 0;
   });
 
+  // Apply other stock adjustments (non "Estoque Inicial")
   MOCK_STOCK_ADJUSTMENTS.forEach(adj => {
-     if (adj.reason !== 'Initial Stock') {
+     if (adj.reason !== 'Estoque Inicial') {
         const product = MOCK_PRODUCTS.find(p => p.id === adj.productId);
         if (product) {
             product.currentStock += adj.quantityChange;
@@ -148,6 +151,7 @@ export const MOCK_SALES: Sale[] = [
      }
   });
 
+  // Deduct sales from stock
   MOCK_SALES.forEach(sale => {
     const product = MOCK_PRODUCTS.find(p => p.id === sale.productId);
     if (product) {

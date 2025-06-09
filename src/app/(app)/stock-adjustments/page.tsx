@@ -9,7 +9,6 @@ import type { StockAdjustment } from "@/types";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { DataTable, type ColumnDefinition } from "@/components/common/DataTable";
 import {
   Select,
@@ -35,25 +34,35 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 
 const stockAdjustmentSchema = z.object({
-  productId: z.string().min(1, "Product is required"),
-  quantityChange: z.coerce.number().int().refine(val => val !== 0, "Quantity change cannot be zero"),
-  reason: z.string().min(1, "Reason is required").max(100, "Reason is too long"),
-  date: z.date({ required_error: "Date is required." }),
+  productId: z.string().min(1, "Produto é obrigatório"),
+  quantityChange: z.coerce.number().int().refine(val => val !== 0, "Alteração de quantidade não pode ser zero"),
+  reason: z.string().min(1, "Motivo é obrigatório").max(100, "Motivo muito longo"),
+  date: z.date({ required_error: "Data é obrigatória." }),
 });
 
 type StockAdjustmentFormData = z.infer<typeof stockAdjustmentSchema>;
 
-const adjustmentReasons = ["New Batch", "Stock Count Correction", "Damaged Goods", "Returned Item", "Promotion/Gift", "Other"];
+const adjustmentReasonsPt = {
+  "New Batch": "Novo Lote",
+  "Stock Count Correction": "Correção de Contagem",
+  "Damaged Goods": "Mercadoria Danificada",
+  "Returned Item": "Item Devolvido",
+  "Promotion/Gift": "Promoção/Brinde",
+  "Other": "Outro",
+  "Initial Stock": "Estoque Inicial" // Used internally
+};
+const displayAdjustmentReasons = Object.values(adjustmentReasonsPt).filter(r => r !== "Estoque Inicial");
+
 
 export default function StockAdjustmentsPage() {
   const { products, stockAdjustments, addStockAdjustment } = useAppContext();
@@ -75,14 +84,14 @@ export default function StockAdjustmentsPage() {
       addStockAdjustment({
         productId: data.productId,
         quantityChange: data.quantityChange,
-        reason: data.reason,
+        reason: data.reason, // This will be one of the pt-BR reasons or custom
         date: data.date.toISOString(),
       });
-      toast({ title: "Success", description: "Stock adjustment recorded successfully." });
+      toast({ title: "Sucesso", description: "Ajuste de estoque registrado com sucesso." });
       setIsModalOpen(false);
-      form.reset({ date: new Date(), quantityChange: 0 }); // Reset with current date
+      form.reset({ date: new Date(), quantityChange: 0, reason: "", productId: "" });
     } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: String(error) || "Failed to record stock adjustment." });
+      toast({ variant: "destructive", title: "Erro", description: String(error) || "Falha ao registrar ajuste de estoque." });
       console.error(error);
     }
   };
@@ -90,41 +99,41 @@ export default function StockAdjustmentsPage() {
   const columns: ColumnDefinition<StockAdjustment>[] = [
     { 
       accessorKey: "date", 
-      header: "Date",
-      cell: (row) => new Date(row.date).toLocaleDateString(),
+      header: "Data",
+      cell: (row) => new Date(row.date).toLocaleDateString('pt-BR'),
     },
-    { accessorKey: "productName", header: "Product" },
+    { accessorKey: "productName", header: "Produto" },
     { 
       accessorKey: "quantityChange", 
-      header: "Quantity Change",
+      header: "Alteração de Quantidade",
       cell: (row) => (
         <span className={row.quantityChange >= 0 ? "text-green-600" : "text-red-600"}>
           {row.quantityChange > 0 ? "+" : ""}{row.quantityChange}
         </span>
       )
     },
-    { accessorKey: "reason", header: "Reason" },
+    { accessorKey: "reason", header: "Motivo" },
   ];
 
   return (
     <div className="container mx-auto py-2">
-      <PageHeader title="Stock Adjustments" description="Record changes to your inventory levels.">
+      <PageHeader title="Ajustes de Estoque" description="Registre alterações nos níveis do seu inventário.">
         <Button onClick={() => setIsModalOpen(true)} className="bg-accent hover:bg-accent/90 text-accent-foreground">
-          <PlusCircle className="mr-2 h-4 w-4" /> Add Adjustment
+          <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Ajuste
         </Button>
       </PageHeader>
 
-      <DataTable columns={columns} data={stockAdjustments} caption="History of stock adjustments." />
+      <DataTable columns={columns} data={stockAdjustments} caption="Histórico de ajustes de estoque." />
 
       <Dialog open={isModalOpen} onOpenChange={(isOpen) => {
         setIsModalOpen(isOpen);
-        if (!isOpen) form.reset({ date: new Date(), quantityChange: 0 });
+        if (!isOpen) form.reset({ date: new Date(), quantityChange: 0, reason: "", productId: "" });
       }}>
         <DialogContent className="sm:max-w-[425px] bg-card">
           <DialogHeader>
-            <DialogTitle className="font-headline">New Stock Adjustment</DialogTitle>
+            <DialogTitle className="font-headline">Novo Ajuste de Estoque</DialogTitle>
             <DialogDescription>
-              Record a new adjustment to product stock levels.
+              Registre um novo ajuste nos níveis de estoque do produto.
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -134,17 +143,17 @@ export default function StockAdjustmentsPage() {
                 name="productId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Product</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>Produto</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue="">
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a product" />
+                          <SelectValue placeholder="Selecione um produto" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {products.map(product => (
                           <SelectItem key={product.id} value={product.id}>
-                            {product.name} (Current: {product.currentStock})
+                            {product.name} (Atual: {product.currentStock})
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -159,9 +168,9 @@ export default function StockAdjustmentsPage() {
                 name="quantityChange"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Quantity Change</FormLabel>
+                    <FormLabel>Alteração de Quantidade</FormLabel>
                     <FormControl>
-                      <Input type="number" step="1" placeholder="e.g., 10 or -5" {...field} />
+                      <Input type="number" step="1" placeholder="ex.: 10 ou -5" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -173,33 +182,34 @@ export default function StockAdjustmentsPage() {
                 name="reason"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Reason</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>Motivo</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue="">
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a reason" />
+                          <SelectValue placeholder="Selecione um motivo" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {adjustmentReasons.map(reason => (
+                        {displayAdjustmentReasons.map(reason => (
                           <SelectItem key={reason} value={reason}>
                             {reason}
                           </SelectItem>
                         ))}
-                         {field.value && !adjustmentReasons.includes(field.value) && (
-                            <SelectItem value={field.value} disabled>
-                              {field.value} (Custom)
-                            </SelectItem>
-                          )}
                       </SelectContent>
                     </Select>
-                    {/* Allow custom reason if 'Other' selected perhaps, or just a text input */}
-                    {/* For simplicity, if reason is not in list, it's custom */}
                      <Input 
                         className="mt-2"
-                        placeholder="Or type a custom reason" 
-                        onChange={(e) => field.onChange(e.target.value)} 
-                        value={adjustmentReasons.includes(field.value) ? "" : field.value}
+                        placeholder="Ou digite um motivo personalizado" 
+                        onChange={(e) => {
+                            const customValue = e.target.value;
+                            // If user types something, it becomes the custom reason
+                            // If they then select from dropdown, this input should clear or reflect selection
+                            // This simple onChange just sets the custom value.
+                            // For a cleaner UX, might need more state to manage custom input vs. selection.
+                            field.onChange(customValue);
+                         }}
+                        // Only show input text if it's a custom reason not in predefined list
+                        value={displayAdjustmentReasons.includes(field.value) ? "" : field.value}
                       />
                     <FormMessage />
                   </FormItem>
@@ -211,7 +221,7 @@ export default function StockAdjustmentsPage() {
                 name="date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Adjustment Date</FormLabel>
+                    <FormLabel>Data do Ajuste</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -223,9 +233,9 @@ export default function StockAdjustmentsPage() {
                             )}
                           >
                             {field.value ? (
-                              format(field.value, "PPP")
+                              format(field.value, "PPP", { locale: ptBR })
                             ) : (
-                              <span>Pick a date</span>
+                              <span>Escolha uma data</span>
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
@@ -240,6 +250,7 @@ export default function StockAdjustmentsPage() {
                             date > new Date() || date < new Date("1900-01-01")
                           }
                           initialFocus
+                          locale={ptBR}
                         />
                       </PopoverContent>
                     </Popover>
@@ -250,9 +261,9 @@ export default function StockAdjustmentsPage() {
 
               <DialogFooter className="pt-4">
                  <DialogClose asChild>
-                    <Button type="button" variant="outline">Cancel</Button>
+                    <Button type="button" variant="outline">Cancelar</Button>
                  </DialogClose>
-                <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">Add Adjustment</Button>
+                <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">Adicionar Ajuste</Button>
               </DialogFooter>
             </form>
           </Form>

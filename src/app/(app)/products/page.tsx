@@ -9,7 +9,6 @@ import type { Product } from "@/types";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { DataTable, type ColumnDefinition } from "@/components/common/DataTable";
 import {
   Dialog,
@@ -28,15 +27,15 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { PlusCircle, Edit2, Trash2 } from "lucide-react";
+import { PlusCircle, Edit2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const productSchema = z.object({
-  name: z.string().min(1, "Name is required").max(100, "Name is too long"),
-  type: z.string().min(1, "Type is required").max(50, "Type is too long"),
-  costPrice: z.coerce.number().min(0, "Cost price must be non-negative"),
-  sellingPrice: z.coerce.number().min(0, "Selling price must be non-negative"),
-  initialStock: z.coerce.number().int().min(0, "Initial stock must be a non-negative integer"),
+  name: z.string().min(1, "Nome é obrigatório").max(100, "Nome muito longo"),
+  type: z.string().min(1, "Tipo é obrigatório").max(50, "Tipo muito longo"),
+  costPrice: z.coerce.number().min(0, "Preço de custo deve ser não-negativo"),
+  sellingPrice: z.coerce.number().min(0, "Preço de venda deve ser não-negativo"),
+  initialStock: z.coerce.number().int().min(0, "Estoque inicial deve ser um inteiro não-negativo"),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -65,7 +64,7 @@ export default function ProductsPage() {
         type: editingProduct.type,
         costPrice: editingProduct.costPrice,
         sellingPrice: editingProduct.sellingPrice,
-        initialStock: editingProduct.currentStock, // For editing, 'initialStock' field represents current stock to be set.
+        initialStock: editingProduct.currentStock, 
       });
     } else {
       form.reset();
@@ -79,15 +78,10 @@ export default function ProductsPage() {
         const updated: Product = {
           ...editingProduct,
           ...data,
-          // For an edit, currentStock might need more complex logic or a separate flow.
-          // Here, we assume an edit might reset stock if 'initialStock' field is used that way.
-          // A better approach for stock updates is through Stock Adjustments.
-          // This simplistic update is for product details mainly.
-          // Let's assume initialStock field in edit mode is actually to set currentStock directly for simplicity here.
           currentStock: data.initialStock 
         };
         updateProduct(updated);
-        toast({ title: "Success", description: "Product updated successfully." });
+        toast({ title: "Sucesso", description: "Produto atualizado com sucesso." });
       } else {
         addProduct({
           name: data.name,
@@ -96,13 +90,13 @@ export default function ProductsPage() {
           sellingPrice: data.sellingPrice,
           initialStock: data.initialStock,
         });
-        toast({ title: "Success", description: "Product added successfully." });
+        toast({ title: "Sucesso", description: "Produto adicionado com sucesso." });
       }
       setIsModalOpen(false);
       setEditingProduct(null);
       form.reset();
     } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: "Failed to save product." });
+      toast({ variant: "destructive", title: "Erro", description: "Falha ao salvar produto." });
       console.error(error);
     }
   };
@@ -112,42 +106,33 @@ export default function ProductsPage() {
     setIsModalOpen(true);
   };
   
-  // handleDelete would require more state logic or backend. Placeholder.
-  // const handleDelete = (productId: string) => { 
-  //   toast({ title: "Info", description: "Delete functionality not implemented in this demo." });
-  // };
-
   const columns: ColumnDefinition<Product>[] = [
-    { accessorKey: "name", header: "Name" },
-    { accessorKey: "type", header: "Type" },
+    { accessorKey: "name", header: "Nome" },
+    { accessorKey: "type", header: "Tipo" },
     { 
       accessorKey: "costPrice", 
-      header: "Cost Price",
-      cell: (row) => `$${row.costPrice.toFixed(2)}`
+      header: "Preço de Custo",
+      cell: (row) => `R$${row.costPrice.toFixed(2)}`
     },
     { 
       accessorKey: "sellingPrice", 
-      header: "Selling Price",
-      cell: (row) => `$${row.sellingPrice.toFixed(2)}`
+      header: "Preço de Venda",
+      cell: (row) => `R$${row.sellingPrice.toFixed(2)}`
     },
-    { accessorKey: "currentStock", header: "Current Stock" },
+    { accessorKey: "currentStock", header: "Estoque Atual" },
     {
       accessorKey: "actions",
-      header: "Actions",
+      header: "Ações",
       cell: (row) => (
         <div className="flex gap-2">
           <Button variant="outline" size="icon" onClick={() => handleEdit(row)} className="hover:text-primary">
             <Edit2 className="h-4 w-4" />
           </Button>
-          {/* <Button variant="outline" size="icon" onClick={() => handleDelete(row.id)} className="hover:text-destructive">
-            <Trash2 className="h-4 w-4" />
-          </Button> */}
         </div>
       ),
     },
   ];
   
-  // Sort products by name for consistent display
   const sortedProducts = React.useMemo(() => 
     [...products].sort((a, b) => a.name.localeCompare(b.name)), 
     [products]
@@ -156,13 +141,13 @@ export default function ProductsPage() {
 
   return (
     <div className="container mx-auto py-2">
-      <PageHeader title="Products" description="Manage your artisanal products.">
+      <PageHeader title="Produtos" description="Gerencie seus produtos artesanais.">
         <Button onClick={() => { setEditingProduct(null); setIsModalOpen(true); }} className="bg-accent hover:bg-accent/90 text-accent-foreground">
-          <PlusCircle className="mr-2 h-4 w-4" /> Add Product
+          <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Produto
         </Button>
       </PageHeader>
 
-      <DataTable columns={columns} data={sortedProducts} caption="List of all products." />
+      <DataTable columns={columns} data={sortedProducts} caption="Lista de todos os produtos." />
 
       <Dialog open={isModalOpen} onOpenChange={(isOpen) => {
         setIsModalOpen(isOpen);
@@ -173,9 +158,9 @@ export default function ProductsPage() {
       }}>
         <DialogContent className="sm:max-w-[425px] bg-card">
           <DialogHeader>
-            <DialogTitle className="font-headline">{editingProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
+            <DialogTitle className="font-headline">{editingProduct ? "Editar Produto" : "Adicionar Novo Produto"}</DialogTitle>
             <DialogDescription>
-              {editingProduct ? "Update the details of your product." : "Enter the details of your new product."}
+              {editingProduct ? "Atualize os detalhes do seu produto." : "Insira os detalhes do seu novo produto."}
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -185,9 +170,9 @@ export default function ProductsPage() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Product Name</FormLabel>
+                    <FormLabel>Nome do Produto</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Lavender Dream Candle" {...field} />
+                      <Input placeholder="ex.: Vela Sonho de Lavanda" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -198,9 +183,9 @@ export default function ProductsPage() {
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Product Type</FormLabel>
+                    <FormLabel>Tipo do Produto</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Candle, Cream, Perfume" {...field} />
+                      <Input placeholder="ex.: Vela, Creme, Perfume" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -212,7 +197,7 @@ export default function ProductsPage() {
                   name="costPrice"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Cost Price ($)</FormLabel>
+                      <FormLabel>Preço de Custo (R$)</FormLabel>
                       <FormControl>
                         <Input type="number" step="0.01" {...field} />
                       </FormControl>
@@ -225,7 +210,7 @@ export default function ProductsPage() {
                   name="sellingPrice"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Selling Price ($)</FormLabel>
+                      <FormLabel>Preço de Venda (R$)</FormLabel>
                       <FormControl>
                         <Input type="number" step="0.01" {...field} />
                       </FormControl>
@@ -239,7 +224,7 @@ export default function ProductsPage() {
                 name="initialStock"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{editingProduct ? "Set Current Stock" : "Initial Stock Quantity"}</FormLabel>
+                    <FormLabel>{editingProduct ? "Definir Estoque Atual" : "Quantidade Inicial em Estoque"}</FormLabel>
                     <FormControl>
                       <Input type="number" step="1" {...field} />
                     </FormControl>
@@ -249,10 +234,10 @@ export default function ProductsPage() {
               />
               <DialogFooter className="pt-4">
                 <DialogClose asChild>
-                  <Button type="button" variant="outline">Cancel</Button>
+                  <Button type="button" variant="outline">Cancelar</Button>
                 </DialogClose>
                 <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                  {editingProduct ? "Save Changes" : "Add Product"}
+                  {editingProduct ? "Salvar Alterações" : "Adicionar Produto"}
                 </Button>
               </DialogFooter>
             </form>

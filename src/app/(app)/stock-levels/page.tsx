@@ -39,11 +39,11 @@ export default function StockLevelsPage() {
 
 
   const columns: ColumnDefinition<Product>[] = [
-    { accessorKey: "name", header: "Product Name", size: 300 },
-    { accessorKey: "type", header: "Type", size: 150 },
+    { accessorKey: "name", header: "Nome do Produto", size: 300 },
+    { accessorKey: "type", header: "Tipo", size: 150 },
     { 
       accessorKey: "currentStock", 
-      header: "Current Stock", 
+      header: "Estoque Atual", 
       size: 150,
       cell: (row) => (
         <Badge 
@@ -56,50 +56,50 @@ export default function StockLevelsPage() {
     },
     { 
       accessorKey: "costPrice", 
-      header: "Cost/Item",
+      header: "Custo/Item",
       size: 120,
-      cell: (row) => `$${row.costPrice.toFixed(2)}`
+      cell: (row) => `R$${row.costPrice.toFixed(2)}`
     },
     { 
       accessorKey: "sellingPrice", 
-      header: "Sell/Item",
+      header: "Venda/Item",
       size: 120,
-      cell: (row) => `$${row.sellingPrice.toFixed(2)}`
+      cell: (row) => `R$${row.sellingPrice.toFixed(2)}`
     },
     {
       accessorKey: "totalValue",
-      header: "Total Stock Value (Cost)",
+      header: "Valor Total Estoque (Custo)",
       size: 200,
-      cell: (row) => `$${(row.currentStock * row.costPrice).toFixed(2)}`
+      cell: (row) => `R$${(row.currentStock * row.costPrice).toFixed(2)}`
     }
   ];
 
   return (
     <div className="container mx-auto py-2">
-      <PageHeader title="Stock Levels" description="View current inventory levels for all products." />
+      <PageHeader title="Níveis de Estoque" description="Veja os níveis de estoque atuais para todos os produtos." />
 
       <div className="mb-4 flex flex-col sm:flex-row gap-4">
         <Input 
-          placeholder="Search products..."
+          placeholder="Buscar produtos..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
         />
         <Select value={selectedType} onValueChange={setSelectedType}>
           <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Filter by type" />
+            <SelectValue placeholder="Filtrar por tipo" />
           </SelectTrigger>
           <SelectContent>
             {productTypes.map(type => (
               <SelectItem key={type} value={type}>
-                {type === "all" ? "All Types" : type}
+                {type === "all" ? "Todos os Tipos" : type}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      <DataTable columns={columns} data={filteredProducts} caption="Current stock levels." />
+      <DataTable columns={columns} data={filteredProducts} caption="Níveis de estoque atuais." />
     </div>
   );
 }

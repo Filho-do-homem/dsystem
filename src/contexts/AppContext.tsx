@@ -27,10 +27,9 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Load mock data on initial client-side mount
     setProducts(MOCK_PRODUCTS);
-    setStockAdjustments(MOCK_STOCK_ADJUSTMENTS);
-    setSales(MOCK_SALES);
+    setStockAdjustments(MOCK_STOCK_ADJUSTMENTS.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    setSales(MOCK_SALES.sort((a,b) => new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime()));
     setIsInitialized(true);
   }, []);
   
@@ -53,18 +52,17 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
     setProducts(prev => [...prev, newProduct]);
 
-    // Add initial stock adjustment
     if (productData.initialStock > 0) {
       const initialAdjustment: StockAdjustment = {
         id: generateId(),
         productId: newProduct.id,
         productName: newProduct.name,
         quantityChange: productData.initialStock,
-        reason: "Initial Stock",
+        reason: "Estoque Inicial", // Translated
         date: newProduct.createdAt,
         createdAt: newProduct.createdAt,
       };
-      setStockAdjustments(prev => [...prev, initialAdjustment]);
+      setStockAdjustments(prev => [...prev, initialAdjustment].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     }
     return newProduct;
   }, []);
@@ -72,9 +70,8 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const addStockAdjustment = useCallback((adjustmentData: Omit<StockAdjustment, 'id' | 'createdAt' | 'productName'>) => {
     const product = getProductById(adjustmentData.productId);
     if (!product) {
-      console.error("Product not found for stock adjustment");
-      // Potentially throw error or return null
-      throw new Error("Product not found");
+      console.error("Produto não encontrado para ajuste de estoque");
+      throw new Error("Produto não encontrado");
     }
 
     const newAdjustment: StockAdjustment = {
@@ -93,12 +90,11 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const addSale = useCallback((saleData: Omit<Sale, 'id' | 'createdAt' | 'totalAmount' | 'productName'>) => {
     const product = getProductById(saleData.productId);
     if (!product) {
-      console.error("Product not found for sale");
+      console.error("Produto não encontrado para venda");
       return null;
     }
     if (product.currentStock < saleData.quantitySold) {
-      console.error("Not enough stock for sale");
-      // In a real app, show a user-facing error
+      console.error("Estoque insuficiente para venda");
       return null; 
     }
 
@@ -118,7 +114,6 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
 
   if (!isInitialized) {
-    // You can return a loading spinner or null here
     return null; 
   }
 
@@ -132,7 +127,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 export const useAppContext = () => {
   const context = useContext(AppContext);
   if (context === undefined) {
-    throw new Error('useAppContext must be used within an AppContextProvider');
+    throw new Error('useAppContext deve ser usado dentro de um AppContextProvider');
   }
   return context;
 };

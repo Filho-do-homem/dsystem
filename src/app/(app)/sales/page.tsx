@@ -39,13 +39,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 const saleSchema = z.object({
-  productId: z.string().min(1, "Product is required"),
-  quantitySold: z.coerce.number().int().min(1, "Quantity must be at least 1"),
-  pricePerItem: z.coerce.number().min(0, "Price must be non-negative"),
-  saleDate: z.date({ required_error: "Sale date is required." }),
+  productId: z.string().min(1, "Produto é obrigatório"),
+  quantitySold: z.coerce.number().int().min(1, "Quantidade deve ser no mínimo 1"),
+  pricePerItem: z.coerce.number().min(0, "Preço deve ser não-negativo"),
+  saleDate: z.date({ required_error: "Data da venda é obrigatória." }),
 });
 
 type SaleFormData = z.infer<typeof saleSchema>;
@@ -81,11 +82,11 @@ export default function SalesPage() {
   const onSubmit: SubmitHandler<SaleFormData> = (data) => {
     const product = getProductById(data.productId);
     if (!product) {
-      toast({ variant: "destructive", title: "Error", description: "Selected product not found." });
+      toast({ variant: "destructive", title: "Erro", description: "Produto selecionado não encontrado." });
       return;
     }
     if (product.currentStock < data.quantitySold) {
-       toast({ variant: "destructive", title: "Error", description: `Not enough stock for ${product.name}. Available: ${product.currentStock}` });
+       toast({ variant: "destructive", title: "Erro", description: `Estoque insuficiente para ${product.name}. Disponível: ${product.currentStock}` });
        return;
     }
 
@@ -97,54 +98,51 @@ export default function SalesPage() {
     });
 
     if (saleRecorded) {
-      toast({ title: "Success", description: "Sale recorded successfully." });
+      toast({ title: "Sucesso", description: "Venda registrada com sucesso." });
       setIsModalOpen(false);
-      form.reset({ saleDate: new Date(), quantitySold: 1, pricePerItem: 0 });
-    } else {
-      // Error already handled in addSale or stock check
-      // toast({ variant: "destructive", title: "Error", description: "Failed to record sale. Insufficient stock or other issue." });
+      form.reset({ saleDate: new Date(), quantitySold: 1, pricePerItem: 0, productId: "" });
     }
   };
 
   const columns: ColumnDefinition<Sale>[] = [
     { 
       accessorKey: "saleDate", 
-      header: "Date",
-      cell: (row) => new Date(row.saleDate).toLocaleDateString(),
+      header: "Data",
+      cell: (row) => new Date(row.saleDate).toLocaleDateString('pt-BR'),
     },
-    { accessorKey: "productName", header: "Product" },
-    { accessorKey: "quantitySold", header: "Quantity" },
+    { accessorKey: "productName", header: "Produto" },
+    { accessorKey: "quantitySold", header: "Quantidade" },
     { 
       accessorKey: "pricePerItem", 
-      header: "Price/Item",
-      cell: (row) => `$${row.pricePerItem.toFixed(2)}` 
+      header: "Preço/Item",
+      cell: (row) => `R$${row.pricePerItem.toFixed(2)}` 
     },
     { 
       accessorKey: "totalAmount", 
-      header: "Total Amount",
-      cell: (row) => `$${row.totalAmount.toFixed(2)}`
+      header: "Valor Total",
+      cell: (row) => `R$${row.totalAmount.toFixed(2)}`
     },
   ];
 
   return (
     <div className="container mx-auto py-2">
-      <PageHeader title="Sales" description="Record new sales and view transaction history.">
+      <PageHeader title="Vendas" description="Registre novas vendas e veja o histórico de transações.">
         <Button onClick={() => setIsModalOpen(true)} className="bg-accent hover:bg-accent/90 text-accent-foreground">
-          <PlusCircle className="mr-2 h-4 w-4" /> Record Sale
+          <PlusCircle className="mr-2 h-4 w-4" /> Registrar Venda
         </Button>
       </PageHeader>
 
-      <DataTable columns={columns} data={sales} caption="History of sales transactions." />
+      <DataTable columns={columns} data={sales} caption="Histórico de transações de venda." />
 
       <Dialog open={isModalOpen} onOpenChange={(isOpen) => {
         setIsModalOpen(isOpen);
-        if (!isOpen) form.reset({ saleDate: new Date(), quantitySold: 1, pricePerItem: 0 });
+        if (!isOpen) form.reset({ saleDate: new Date(), quantitySold: 1, pricePerItem: 0, productId: "" });
       }}>
         <DialogContent className="sm:max-w-[425px] bg-card">
           <DialogHeader>
-            <DialogTitle className="font-headline">Record New Sale</DialogTitle>
+            <DialogTitle className="font-headline">Registrar Nova Venda</DialogTitle>
             <DialogDescription>
-              Enter the details of the sale transaction.
+              Insira os detalhes da transação de venda.
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -154,11 +152,11 @@ export default function SalesPage() {
                 name="productId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Product</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>Produto</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue="">
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a product" />
+                          <SelectValue placeholder="Selecione um produto" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -166,14 +164,14 @@ export default function SalesPage() {
                           .filter(p => p.currentStock > 0)
                           .map(product => (
                           <SelectItem key={product.id} value={product.id}>
-                            {product.name} (Stock: {product.currentStock})
+                            {product.name} (Estoque: {product.currentStock})
                           </SelectItem>
                         ))}
                          {products.filter(p => p.currentStock <= 0).length > 0 && (
-                            <optgroup label="Out of Stock">
+                            <optgroup label="Fora de Estoque">
                                 {products.filter(p => p.currentStock <= 0).map(product => (
                                      <SelectItem key={product.id} value={product.id} disabled>
-                                        {product.name} (Stock: {product.currentStock})
+                                        {product.name} (Estoque: {product.currentStock})
                                     </SelectItem>
                                 ))}
                             </optgroup>
@@ -190,7 +188,7 @@ export default function SalesPage() {
                 name="quantitySold"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Quantity Sold</FormLabel>
+                    <FormLabel>Quantidade Vendida</FormLabel>
                     <FormControl>
                       <Input type="number" step="1" min="1" {...field} />
                     </FormControl>
@@ -204,7 +202,7 @@ export default function SalesPage() {
                 name="pricePerItem"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price Per Item ($)</FormLabel>
+                    <FormLabel>Preço Por Item (R$)</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.01" {...field} />
                     </FormControl>
@@ -218,7 +216,7 @@ export default function SalesPage() {
                 name="saleDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Sale Date</FormLabel>
+                    <FormLabel>Data da Venda</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -230,9 +228,9 @@ export default function SalesPage() {
                             )}
                           >
                             {field.value ? (
-                              format(field.value, "PPP")
+                              format(field.value, "PPP", { locale: ptBR })
                             ) : (
-                              <span>Pick a date</span>
+                              <span>Escolha uma data</span>
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
@@ -247,6 +245,7 @@ export default function SalesPage() {
                             date > new Date() || date < new Date("1900-01-01")
                           }
                           initialFocus
+                          locale={ptBR}
                         />
                       </PopoverContent>
                     </Popover>
@@ -257,9 +256,9 @@ export default function SalesPage() {
 
               <DialogFooter className="pt-4">
                 <DialogClose asChild>
-                    <Button type="button" variant="outline">Cancel</Button>
+                    <Button type="button" variant="outline">Cancelar</Button>
                 </DialogClose>
-                <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">Record Sale</Button>
+                <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">Registrar Venda</Button>
               </DialogFooter>
             </form>
           </Form>

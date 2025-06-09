@@ -9,7 +9,7 @@ import {
   ShoppingCart, 
   BarChartHorizontalBig,
   Blend,
-  LucideIcon
+  type LucideIcon
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -24,7 +24,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-import { useSidebar } from "@/components/ui/sidebar" // Ensure this hook is correctly imported/defined
+import { useSidebar } from "@/components/ui/sidebar"
 
 interface NavItem {
   href: string
@@ -33,11 +33,11 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/products", label: "Products", icon: Package },
-  { href: "/stock-adjustments", label: "Stock Adjustments", icon: ArchiveRestore },
-  { href: "/sales", label: "Sales", icon: ShoppingCart },
-  { href: "/stock-levels", label: "Stock Levels", icon: BarChartHorizontalBig },
+  { href: "/dashboard", label: "Painel", icon: LayoutDashboard },
+  { href: "/products", label: "Produtos", icon: Package },
+  { href: "/stock-adjustments", label: "Ajustes de Estoque", icon: ArchiveRestore },
+  { href: "/sales", label: "Vendas", icon: ShoppingCart },
+  { href: "/stock-levels", label: "Níveis de Estoque", icon: BarChartHorizontalBig },
 ]
 
 export function SidebarNav() {
@@ -77,7 +77,6 @@ export function SidebarNav() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-2 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center">
-         {/* Placeholder for footer content, e.g. user profile, settings */}
          <div className="p-2 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
            © {new Date().getFullYear()} CraftFlow
          </div>
@@ -86,7 +85,6 @@ export function SidebarNav() {
   )
 }
 
-// Add a dummy PanelLeftOpen if not available in lucide-react or your setup
 const PanelLeftOpen = ({className}: {className?: string}) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cn("lucide lucide-panel-left-open", className)}>
     <rect width="18" height="18" x="3" y="3" rx="2"/>
@@ -94,4 +92,3 @@ const PanelLeftOpen = ({className}: {className?: string}) => (
     <path d="m14 9 3 3-3 3"/>
   </svg>
 );
-

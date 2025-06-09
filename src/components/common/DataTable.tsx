@@ -14,10 +14,10 @@ import {
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 
 export interface ColumnDefinition<T> {
-  accessorKey: keyof T | string; // Allow string for custom accessors/renderers
+  accessorKey: keyof T | string; 
   header: string | React.ReactNode;
-  cell?: (row: T) => React.ReactNode; // Custom cell renderer
-  size?: number; // For column width (flex-basis percentage or fixed pixels)
+  cell?: (row: T) => React.ReactNode; 
+  size?: number; 
 }
 
 interface DataTableProps<T> {
@@ -27,7 +27,7 @@ interface DataTableProps<T> {
   emptyStateMessage?: string;
 }
 
-export function DataTable<T>({ columns, data, caption, emptyStateMessage = "No data available." }: DataTableProps<T>) {
+export function DataTable<T>({ columns, data, caption, emptyStateMessage = "Nenhum dado disponível." }: DataTableProps<T>) {
   return (
     <ScrollArea className="rounded-md border shadow-sm">
       <Table>

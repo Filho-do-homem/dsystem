@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: 'CraftFlow',
-  description: 'Inventory management for artisanal products',
+  description: 'Gerenciamento de estoque para produtos artesanais',
 };
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

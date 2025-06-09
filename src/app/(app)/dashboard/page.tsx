@@ -17,11 +17,11 @@ export default function DashboardPage() {
   const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
 
   const summaryCards: SummaryCardData[] = [
-    { title: "Total Products", value: totalProducts, icon: Package, description: "Distinct product types" },
-    { title: "Total Stock Items", value: totalStockItems, icon: ListChecks, description: "Sum of all items in stock" },
-    { title: "Total Stock Value (Cost)", value: `$${totalStockValue.toFixed(2)}`, icon: DollarSign, description: "Based on cost price" },
-    { title: "Total Sales Count", value: totalSalesCount, icon: ShoppingCart, description: "Number of sales transactions" },
-    { title: "Total Revenue", value: `$${totalRevenue.toFixed(2)}`, icon: TrendingUp, description: "Gross revenue from sales" },
+    { title: "Total de Produtos", value: totalProducts, icon: Package, description: "Tipos de produtos distintos" },
+    { title: "Total de Itens em Estoque", value: totalStockItems, icon: ListChecks, description: "Soma de todos os itens em estoque" },
+    { title: "Valor Total do Estoque (Custo)", value: `R$${totalStockValue.toFixed(2)}`, icon: DollarSign, description: "Baseado no preço de custo" },
+    { title: "Total de Vendas", value: totalSalesCount, icon: ShoppingCart, description: "Número de transações de venda" },
+    { title: "Receita Total", value: `R$${totalRevenue.toFixed(2)}`, icon: TrendingUp, description: "Receita bruta das vendas" },
   ];
 
   const recentActivityLimit = 5;
@@ -31,7 +31,7 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto py-2">
-      <PageHeader title="Dashboard" description="Overview of your store's performance and inventory." />
+      <PageHeader title="Painel" description="Visão geral do desempenho e inventário da sua loja." />
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-8">
         {summaryCards.map((card) => (
@@ -51,7 +51,7 @@ export default function DashboardPage() {
       <div className="grid gap-8 md:grid-cols-2">
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="font-headline">Recent Sales</CardTitle>
+            <CardTitle className="font-headline">Vendas Recentes</CardTitle>
           </CardHeader>
           <CardContent>
             {recentSales.length > 0 ? (
@@ -60,21 +60,21 @@ export default function DashboardPage() {
                   <li key={sale.id} className="flex justify-between items-center p-2 bg-secondary/30 rounded-md">
                     <div>
                       <p className="font-semibold">{sale.productName}</p>
-                      <p className="text-xs text-muted-foreground">Sold: {sale.quantitySold} units on {new Date(sale.saleDate).toLocaleDateString()}</p>
+                      <p className="text-xs text-muted-foreground">Vendido: {sale.quantitySold} unidades em {new Date(sale.saleDate).toLocaleDateString('pt-BR')}</p>
                     </div>
-                    <p className="text-primary font-semibold">${sale.totalAmount.toFixed(2)}</p>
+                    <p className="text-primary font-semibold">R${sale.totalAmount.toFixed(2)}</p>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-muted-foreground">No recent sales.</p>
+              <p className="text-muted-foreground">Nenhuma venda recente.</p>
             )}
           </CardContent>
         </Card>
 
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="font-headline">Recent Stock Adjustments</CardTitle>
+            <CardTitle className="font-headline">Ajustes de Estoque Recentes</CardTitle>
           </CardHeader>
           <CardContent>
             {recentStockAdjustments.length > 0 ? (
@@ -83,16 +83,16 @@ export default function DashboardPage() {
                   <li key={adj.id} className="flex justify-between items-center p-2 bg-secondary/30 rounded-md">
                     <div>
                       <p className="font-semibold">{adj.productName}</p>
-                      <p className="text-xs text-muted-foreground">{adj.reason} on {new Date(adj.date).toLocaleDateString()}</p>
+                      <p className="text-xs text-muted-foreground">{adj.reason} em {new Date(adj.date).toLocaleDateString('pt-BR')}</p>
                     </div>
                     <p className={`font-semibold ${adj.quantityChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {adj.quantityChange > 0 ? '+' : ''}{adj.quantityChange} units
+                      {adj.quantityChange > 0 ? '+' : ''}{adj.quantityChange} unidades
                     </p>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-muted-foreground">No recent stock adjustments.</p>
+              <p className="text-muted-foreground">Nenhum ajuste de estoque recente.</p>
             )}
           </CardContent>
         </Card>
@@ -101,13 +101,13 @@ export default function DashboardPage() {
       <div className="mt-12 text-center">
         <Image 
           src="https://placehold.co/600x300.png" 
-          alt="Artisanal products display"
-          data-ai-hint="artisanal products" 
+          alt="Exibição de produtos artesanais"
+          data-ai-hint="produtos artesanais" 
           width={600} 
           height={300} 
           className="mx-auto rounded-lg shadow-md"
         />
-        <p className="mt-4 text-muted-foreground font-headline">CraftFlow helps you manage your artisanal creations with ease.</p>
+        <p className="mt-4 text-muted-foreground font-headline">CraftFlow ajuda você a gerenciar suas criações artesanais com facilidade.</p>
       </div>
     </div>
   );
