@@ -53,10 +53,10 @@ const DSIcon = (props: React.SVGProps<SVGSVGElement>) => (
     strokeLinejoin="round"
     {...props}
   >
-    {/* D Shape (Larger) */}
-    <path d="M 10 5 L 10 55 L 25 55 Q 50 30 25 5 L 10 5 Z" />
-    {/* S Shape (Smaller, inside D) */}
-    <path d="M 45 18 C 45 23, 31 25, 31 30 S 45 37, 45 42" />
+    {/* D Shape: Semicircle open to the left (straight bar on the right, curve on the left) */}
+    <path d="M 48 5 L 48 55 L 30 55 Q 5 30 30 5 L 48 5 Z" />
+    {/* S Shape: Wave inside the D. Starts top-left-ish, ends bottom-right-ish */}
+    <path d="M 17.5 17.5 Q 32.5 17.5, 25 30 Q 17.5 42.5, 32.5 42.5" />
   </svg>
 );
 
