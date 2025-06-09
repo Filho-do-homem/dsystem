@@ -47,18 +47,16 @@ const DSIcon = (props: React.SVGProps<SVGSVGElement>) => (
     viewBox="0 0 60 60"
     xmlns="http://www.w3.org/2000/svg"
     stroke="currentColor"
-    strokeWidth="6"
+    strokeWidth="5"
     fill="none"
     strokeLinecap="round"
     strokeLinejoin="round"
     {...props}
   >
-    {/* S Part 1 (Top curve, appears to go behind D) */}
-    <path d="M50 12c-15 0-15 15-25 15" />
-    {/* D Shape (Drawn after first part of S, so S appears to go into D) */}
-    <path d="M15 50V10h20a20 20 0 1 1 0 40H15z" />
-    {/* S Part 2 (Bottom curve, exits D. Drawn over D to appear on top) */}
-    <path d="M25 27c-10 0-10 15 5 15h20" />
+    {/* D Shape (Larger) */}
+    <path d="M 10 5 L 10 55 L 25 55 Q 50 30 25 5 L 10 5 Z" />
+    {/* S Shape (Smaller, inside D) */}
+    <path d="M 45 18 C 45 23, 31 25, 31 30 S 45 37, 45 42" />
   </svg>
 );
 
@@ -115,3 +113,4 @@ const PanelLeftOpen = ({className}: {className?: string}) => (
     <path d="m14 9 3 3-3 3"/>
   </svg>
 );
+
