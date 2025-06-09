@@ -98,17 +98,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-      
-      <div className="mt-12 text-center">
-        <Image 
-          src="https://placehold.co/600x300.png" 
-          alt="Exibição de produtos artesanais"
-          data-ai-hint="produtos artesanais" 
-          width={600} 
-          height={300} 
-          className="mx-auto rounded-lg shadow-md"
-        />
-      </div>
     </div>
   );
 }
