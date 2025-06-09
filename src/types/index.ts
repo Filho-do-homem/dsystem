@@ -30,6 +30,16 @@ export interface Sale {
   createdAt: string; // ISO date string
 }
 
+export interface Nota {
+  id: string;
+  productId: string;
+  productName: string; // Denormalized for display convenience
+  quantity: number; // Quantity of product added via this note
+  noteNumber?: string; // Optional: e.g., invoice number, batch number
+  date: string; // ISO date string of the note event
+  createdAt: string; // ISO date string of record creation
+}
+
 // For dashboard summary cards
 export interface SummaryCardData {
   title: string;

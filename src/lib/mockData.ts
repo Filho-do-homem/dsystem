@@ -1,9 +1,11 @@
-import type { Product, StockAdjustment, Sale } from '@/types';
+
+import type { Product, StockAdjustment, Sale, Nota } from '@/types';
 import { generateId } from './utils';
 
 const today = new Date().toISOString();
 const yesterday = new Date(Date.now() - 86400000).toISOString();
 const twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString();
+const threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString();
 
 export const MOCK_PRODUCTS: Product[] = [
   {
@@ -12,7 +14,7 @@ export const MOCK_PRODUCTS: Product[] = [
     type: 'Vela',
     costPrice: 5.00,
     sellingPrice: 15.00,
-    currentStock: 0, // Initialized by the IIFE below
+    currentStock: 0, 
     createdAt: twoDaysAgo,
   },
   {
@@ -21,7 +23,7 @@ export const MOCK_PRODUCTS: Product[] = [
     type: 'Creme',
     costPrice: 3.50,
     sellingPrice: 12.00,
-    currentStock: 0, // Initialized by the IIFE below
+    currentStock: 0, 
     createdAt: yesterday,
   },
   {
@@ -30,7 +32,7 @@ export const MOCK_PRODUCTS: Product[] = [
     type: 'Perfume',
     costPrice: 8.00,
     sellingPrice: 25.00,
-    currentStock: 0, // Initialized by the IIFE below
+    currentStock: 0, 
     createdAt: today,
   },
   {
@@ -39,7 +41,7 @@ export const MOCK_PRODUCTS: Product[] = [
     type: 'Sabonete',
     costPrice: 2.00,
     sellingPrice: 8.00,
-    currentStock: 0, // Initialized by the IIFE below
+    currentStock: 0, 
     createdAt: twoDaysAgo,
   },
 ];
@@ -125,37 +127,73 @@ export const MOCK_SALES: Sale[] = [
   },
 ];
 
-// Update MOCK_PRODUCTS currentStock based on MOCK_STOCK_ADJUSTMENTS and MOCK_SALES for consistency
+export const MOCK_NOTAS: Nota[] = [
+  {
+    id: generateId(),
+    productId: 'prod_1',
+    productName: 'Vela Sonho de Lavanda',
+    quantity: 10,
+    noteNumber: 'NF-001',
+    date: threeDaysAgo,
+    createdAt: threeDaysAgo,
+  },
+  {
+    id: generateId(),
+    productId: 'prod_2',
+    productName: 'Creme de Mãos Manteiga de Karité',
+    quantity: 15,
+    noteNumber: 'BATCH-PROD-005',
+    date: yesterday,
+    createdAt: yesterday,
+  }
+];
+
+
+// Initialize MOCK_PRODUCTS currentStock based on adjustments and sales
 (() => {
   const productStockMap = new Map<string, number>();
 
-  // Initialize stock based on "Estoque Inicial" adjustments
-  MOCK_STOCK_ADJUSTMENTS.forEach(adj => {
-    if (adj.reason === 'Estoque Inicial') {
-      productStockMap.set(adj.productId, (productStockMap.get(adj.productId) || 0) + adj.quantityChange);
-    }
+  MOCK_PRODUCTS.forEach(p => {
+    productStockMap.set(p.id, 0); // Start with 0 stock
   });
   
-  // Set initial stock for products
-  MOCK_PRODUCTS.forEach(p => {
-    p.currentStock = productStockMap.get(p.id) || 0;
+  // Apply all stock adjustments (Initial Stock, New Batch, etc.)
+  MOCK_STOCK_ADJUSTMENTS.forEach(adj => {
+    productStockMap.set(adj.productId, (productStockMap.get(adj.productId) || 0) + adj.quantityChange);
   });
 
-  // Apply other stock adjustments (non "Estoque Inicial")
-  MOCK_STOCK_ADJUSTMENTS.forEach(adj => {
-     if (adj.reason !== 'Estoque Inicial') {
-        const product = MOCK_PRODUCTS.find(p => p.id === adj.productId);
-        if (product) {
-            product.currentStock += adj.quantityChange;
-        }
-     }
+  // Apply stock entries from Notas
+  MOCK_NOTAS.forEach(nota => {
+    // This adjustment will also be added to MOCK_STOCK_ADJUSTMENTS by AppContext logic if we were running it live.
+    // For mock setup, we ensure the product stock reflects these entries initially.
+    // To avoid double counting if AppContext also adds an adjustment for mock Notas:
+    // Let's assume AppContext will create these specific adjustments if addNota is called for mock data.
+    // So, we add them to MOCK_STOCK_ADJUSTMENTS to be consistent with AppContext behavior.
+    const existingAdjustmentForNota = MOCK_STOCK_ADJUSTMENTS.find(
+      sa => sa.productId === nota.productId && sa.date === nota.date && sa.quantityChange === nota.quantity && sa.reason === "Entrada por Nota"
+    );
+    if (!existingAdjustmentForNota) {
+        const stockAdjustmentFromNota: StockAdjustment = {
+            id: generateId(),
+            productId: nota.productId,
+            productName: nota.productName,
+            quantityChange: nota.quantity,
+            reason: "Entrada por Nota",
+            date: nota.date,
+            createdAt: nota.createdAt,
+        };
+        MOCK_STOCK_ADJUSTMENTS.push(stockAdjustmentFromNota);
+        productStockMap.set(nota.productId, (productStockMap.get(nota.productId) || 0) + nota.quantity);
+    }
   });
 
   // Deduct sales from stock
   MOCK_SALES.forEach(sale => {
-    const product = MOCK_PRODUCTS.find(p => p.id === sale.productId);
-    if (product) {
-      product.currentStock -= sale.quantitySold;
-    }
+    productStockMap.set(sale.productId, (productStockMap.get(sale.productId) || 0) - sale.quantitySold);
+  });
+
+  // Update product currentStock
+  MOCK_PRODUCTS.forEach(p => {
+    p.currentStock = productStockMap.get(p.id) || 0;
   });
 })();

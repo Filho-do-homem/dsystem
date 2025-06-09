@@ -1,19 +1,22 @@
+
 "use client";
 
 import type React from 'react';
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { Product, StockAdjustment, Sale } from '@/types';
+import type { Product, StockAdjustment, Sale, Nota } from '@/types';
 import { generateId } from '@/lib/utils';
-import { MOCK_PRODUCTS, MOCK_STOCK_ADJUSTMENTS, MOCK_SALES } from '@/lib/mockData';
+import { MOCK_PRODUCTS, MOCK_STOCK_ADJUSTMENTS, MOCK_SALES, MOCK_NOTAS } from '@/lib/mockData';
 
 
 interface AppContextType {
   products: Product[];
   stockAdjustments: StockAdjustment[];
   sales: Sale[];
+  notas: Nota[];
   addProduct: (productData: Omit<Product, 'id' | 'createdAt' | 'currentStock'> & { initialStock: number }) => Product;
   addStockAdjustment: (adjustmentData: Omit<StockAdjustment, 'id' | 'createdAt' | 'productName'>) => StockAdjustment;
   addSale: (saleData: Omit<Sale, 'id' | 'createdAt' | 'totalAmount' | 'productName'>) => Sale | null;
+  addNota: (notaData: Omit<Nota, 'id' | 'createdAt' | 'productName'>) => Nota;
   getProductById: (productId: string) => Product | undefined;
   updateProduct: (updatedProduct: Product) => void;
 }
@@ -24,12 +27,15 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [products, setProducts] = useState<Product[]>([]);
   const [stockAdjustments, setStockAdjustments] = useState<StockAdjustment[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
+  const [notas, setNotas] = useState<Nota[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     setProducts(MOCK_PRODUCTS);
+    // Sort all date-based arrays initially
     setStockAdjustments(MOCK_STOCK_ADJUSTMENTS.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setSales(MOCK_SALES.sort((a,b) => new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime()));
+    setNotas(MOCK_NOTAS.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setIsInitialized(true);
   }, []);
   
@@ -47,31 +53,41 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const newProduct: Product = {
       ...productData,
       id: generateId(),
-      currentStock: productData.initialStock,
+      currentStock: 0, // Initial stock will be set by the stock adjustment
       createdAt: new Date().toISOString(),
     };
     setProducts(prev => [...prev, newProduct]);
 
-    if (productData.initialStock > 0) {
-      const initialAdjustment: StockAdjustment = {
-        id: generateId(),
-        productId: newProduct.id,
-        productName: newProduct.name,
-        quantityChange: productData.initialStock,
-        reason: "Estoque Inicial", // Translated
-        date: newProduct.createdAt,
-        createdAt: newProduct.createdAt,
-      };
-      setStockAdjustments(prev => [...prev, initialAdjustment].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    // Add initial stock as a stock adjustment
+    if (productData.initialStock !== 0) { // Allow 0 initial stock
+        const initialAdjustment: Omit<StockAdjustment, 'id' | 'createdAt' | 'productName'> = {
+            productId: newProduct.id,
+            quantityChange: productData.initialStock,
+            reason: "Estoque Inicial",
+            date: newProduct.createdAt,
+        };
+        // Use addStockAdjustment to ensure product stock is updated correctly
+        // Need to pass full product list to addStockAdjustment or getProductById inside it must work with state updates
+        // For simplicity, directly call setStockAdjustments and updateProduct here for initial setup
+        const productForAdjustment = newProduct; // The product we just created
+        const fullInitialAdjustment: StockAdjustment = {
+            ...initialAdjustment,
+            id: generateId(),
+            productName: productForAdjustment.name,
+            createdAt: newProduct.createdAt,
+        };
+        setStockAdjustments(prev => [...prev, fullInitialAdjustment].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        updateProduct({ ...productForAdjustment, currentStock: productData.initialStock });
     }
     return newProduct;
-  }, []);
+  }, [updateProduct]);
+
 
   const addStockAdjustment = useCallback((adjustmentData: Omit<StockAdjustment, 'id' | 'createdAt' | 'productName'>) => {
     const product = getProductById(adjustmentData.productId);
     if (!product) {
-      console.error("Produto não encontrado para ajuste de estoque");
-      throw new Error("Produto não encontrado");
+      console.error("Produto não encontrado para ajuste de estoque:", adjustmentData.productId);
+      throw new Error("Produto não encontrado para registrar o ajuste de estoque.");
     }
 
     const newAdjustment: StockAdjustment = {
@@ -87,6 +103,33 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return newAdjustment;
   }, [getProductById, updateProduct]);
 
+  const addNota = useCallback((notaData: Omit<Nota, 'id' | 'createdAt' | 'productName'>) => {
+    const product = getProductById(notaData.productId);
+    if (!product) {
+      console.error("Produto não encontrado para nota de entrada:", notaData.productId);
+      throw new Error("Produto não encontrado para registrar a nota.");
+    }
+
+    const newNota: Nota = {
+      ...notaData,
+      id: generateId(),
+      productName: product.name,
+      createdAt: new Date().toISOString(),
+    };
+    setNotas(prev => [...prev, newNota].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    
+    // This will also update the product's stock
+    addStockAdjustment({
+      productId: notaData.productId,
+      quantityChange: notaData.quantity, // Quantity from the note is the positive change
+      reason: "Entrada por Nota",
+      date: notaData.date, // Date of the note event
+    });
+    
+    return newNota;
+  }, [getProductById, addStockAdjustment]);
+
+
   const addSale = useCallback((saleData: Omit<Sale, 'id' | 'createdAt' | 'totalAmount' | 'productName'>) => {
     const product = getProductById(saleData.productId);
     if (!product) {
@@ -95,7 +138,8 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
     if (product.currentStock < saleData.quantitySold) {
       console.error("Estoque insuficiente para venda");
-      return null; 
+      // Consider throwing an error to be caught by the UI for better feedback
+      throw new Error(`Estoque insuficiente para ${product.name}. Disponível: ${product.currentStock}`);
     }
 
     const newSale: Sale = {
@@ -107,10 +151,15 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
     setSales(prev => [...prev, newSale].sort((a,b) => new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime()));
 
-    const updatedProduct = { ...product, currentStock: product.currentStock - saleData.quantitySold };
-    updateProduct(updatedProduct);
+    // This will also update the product's stock
+    addStockAdjustment({
+        productId: saleData.productId,
+        quantityChange: -saleData.quantitySold, // Negative for sale
+        reason: `Venda ID: ${newSale.id.substring(0,4)}`, // More specific reason
+        date: saleData.saleDate,
+    });
     return newSale;
-  }, [getProductById, updateProduct]);
+  }, [getProductById, addStockAdjustment]);
 
 
   if (!isInitialized) {
@@ -118,7 +167,18 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }
 
   return (
-    <AppContext.Provider value={{ products, stockAdjustments, sales, addProduct, addStockAdjustment, addSale, getProductById, updateProduct }}>
+    <AppContext.Provider value={{ 
+        products, 
+        stockAdjustments, 
+        sales, 
+        notas, 
+        addProduct, 
+        addStockAdjustment, 
+        addSale, 
+        addNota, 
+        getProductById, 
+        updateProduct 
+    }}>
       {children}
     </AppContext.Provider>
   );

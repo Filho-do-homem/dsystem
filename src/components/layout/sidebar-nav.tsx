@@ -1,3 +1,4 @@
+
 "use client"
 
 import Link from "next/link"
@@ -8,6 +9,7 @@ import {
   ArchiveRestore, 
   ShoppingCart, 
   BarChartHorizontalBig,
+  FileText, // Added for Notas
   Blend,
   type LucideIcon
 } from "lucide-react"
@@ -21,9 +23,8 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-  SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button" // SidebarTrigger no longer here
 import { useSidebar } from "@/components/ui/sidebar"
 
 interface NavItem {
@@ -35,6 +36,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: "/dashboard", label: "Painel", icon: LayoutDashboard },
   { href: "/products", label: "Produtos", icon: Package },
+  { href: "/notas", label: "Notas", icon: FileText },
   { href: "/stock-adjustments", label: "Ajustes de Estoque", icon: ArchiveRestore },
   { href: "/sales", label: "Vendas", icon: ShoppingCart },
   { href: "/stock-levels", label: "Níveis de Estoque", icon: BarChartHorizontalBig },
@@ -42,7 +44,7 @@ const navItems: NavItem[] = [
 
 export function SidebarNav() {
   const pathname = usePathname()
-  const { open, setOpen, isMobile, toggleSidebar } = useSidebar();
+  const { isMobile, toggleSidebar } = useSidebar();
 
 
   return (
