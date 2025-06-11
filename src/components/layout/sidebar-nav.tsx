@@ -10,6 +10,7 @@ import {
   ShoppingCart, 
   BarChartHorizontalBig,
   FileText,
+  LogOut, // Import LogOut icon
   type LucideIcon
 } from "lucide-react"
 
@@ -27,6 +28,7 @@ import { Button } from '@/components/ui/button'
 import { SheetTitle } from "@/components/ui/sheet"
 import { useSidebar } from "@/components/ui/sidebar"
 import type React from 'react';
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
 
 interface NavItem {
   href: string
@@ -54,11 +56,8 @@ const DSIcon = (props: React.SVGProps<SVGSVGElement>) => (
     strokeLinejoin="round"
     {...props}
   >
-    {/* D shape Path */}
     <path d="M15 8 V 52 H30 C45 52 50 42 50 30 C50 18 45 8 30 8 H15 Z" />
-    {/* S shape Path (centerline) */}
-    <path d="M38 22 H28 Q25 22 25 25 V28 Q25 31 28 31 H36 Q39 31 39 34 V37 Q39 40 36 40 H26" />
-    {/* Apostrophe-like square element Path */}
+    <path d="M25 21 H34 Q37 21 37 24 V26 Q37 29 34 29 H28 Q25 29 25 32 V34 Q25 37 28 37 H37" />
     <path d="M49 5 h5 v5 h-5 Z" />
   </svg>
 );
@@ -67,6 +66,7 @@ const DSIcon = (props: React.SVGProps<SVGSVGElement>) => (
 export function SidebarNav() {
   const pathname = usePathname()
   const { isMobile, toggleSidebar } = useSidebar();
+  const { logout } = useAuth(); // Get logout function
 
 
   return (
@@ -74,7 +74,7 @@ export function SidebarNav() {
       <SidebarHeader className="p-4 flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
           <DSIcon className="h-7 w-7 text-primary" />
-          {isMobile ? (
+          {isMobile && pathname !== "/login" ? (
             <SheetTitle asChild>
               <h1 className="text-xl font-semibold font-headline">D'System</h1>
             </SheetTitle>
@@ -107,6 +107,18 @@ export function SidebarNav() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-2 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center">
+        <SidebarMenu>
+            <SidebarMenuItem>
+                <SidebarMenuButton
+                    onClick={logout}
+                    tooltip={{ children: "Sair", side: "right", className: "ml-2"}}
+                    className="w-full" 
+                >
+                    <LogOut />
+                    <span>Sair</span>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+        </SidebarMenu>
          <div className="p-2 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
            © {new Date().getFullYear()} D'System
          </div>
@@ -122,4 +134,3 @@ const PanelLeftOpen = ({className}: {className?: string}) => (
     <path d="m14 9 3 3-3 3"/>
   </svg>
 );
-

@@ -1,6 +1,8 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
+import { AuthContextProvider } from '@/contexts/AuthContext'; // Import AuthContextProvider
 
 export const metadata: Metadata = {
   title: "D'System",
@@ -20,7 +22,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased min-h-screen bg-background text-foreground">
-        {children}
+        <AuthContextProvider> {/* Wrap children with AuthContextProvider */}
+          {children}
+        </AuthContextProvider>
         <Toaster />
       </body>
     </html>
