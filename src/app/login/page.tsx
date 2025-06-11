@@ -60,6 +60,11 @@ export default function LoginPage() {
   }, [isAuthenticated, isAuthLoading, router]);
 
   const onSubmit: SubmitHandler<LoginFormInputs> = async (data) => {
+    // !!! PROTOTYPE ONLY - INSECURE AUTHENTICATION !!!
+    // Esta lógica de login depende de validação no lado do cliente e credenciais
+    // fixas no código definidas em AuthContext.
+    // Isso NÃO É SEGURO para um ambiente de produção.
+    // Aplicações reais exigem autenticação e validação robustas no lado do servidor.
     setIsSubmitting(true);
     const success = await login(data.username, data.password);
     if (success) {
