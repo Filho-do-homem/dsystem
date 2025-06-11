@@ -14,8 +14,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
+// Schema para o formulário de login.
+// O Firebase Authentication espera um email, então mudamos de 'username' para 'email'.
 const loginSchema = z.object({
-  username: z.string().min(1, "Nome de usuário é obrigatório"),
+  email: z.string().email("Email inválido").min(1, "Email é obrigatório"),
   password: z.string().min(1, "Senha é obrigatória"),
 });
 
@@ -26,21 +28,21 @@ const DSIcon = (props: React.SVGProps<SVGSVGElement>) => (
     viewBox="0 0 60 60"
     xmlns="http://www.w3.org/2000/svg"
     stroke="currentColor"
-    strokeWidth="4.5"
+    strokeWidth="4"
     fill="none"
     strokeLinecap="round"
     strokeLinejoin="round"
     {...props}
   >
-    <path d="M15 8 V 52 H30 C45 52 50 42 50 30 C50 18 45 8 30 8 H15 Z" />
-    <path d="M25 21 H34 Q37 21 37 24 V26 Q37 29 34 29 H28 Q25 29 25 32 V34 Q25 37 28 37 H37" />
-    <path d="M49 5 h5 v5 h-5 Z" />
+    <path d="M38 8 H15 V52 H38 C50 52 55 42 55 30 C55 18 50 8 38 8 Z" />
+    <path d="M23 21 S26 17 32 19 S35 26 30 28 S23 25 23 25 S25 31 30 33 S38 36 38 36 S34 43 27 41 S23 34 23 34" />
+    <rect x="43" y="5" width="5" height="5" rx="1" strokeWidth="2.5" />
   </svg>
 );
 
 
 export default function LoginPage() {
-  const { login, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { login, isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -60,20 +62,19 @@ export default function LoginPage() {
   }, [isAuthenticated, isAuthLoading, router]);
 
   const onSubmit: SubmitHandler<LoginFormInputs> = async (data) => {
-    // !!! PROTOTYPE ONLY - INSECURE AUTHENTICATION !!!
-    // Esta lógica de login depende de validação no lado do cliente e credenciais
-    // fixas no código definidas em AuthContext.
-    // Isso NÃO É SEGURO para um ambiente de produção.
-    // Aplicações reais exigem autenticação e validação robustas no lado do servidor.
+    // Comentário:
+    // A lógica de login agora usa Firebase Authentication.
+    // A validação de email/senha e a segurança da sessão são tratadas pelo Firebase.
     setIsSubmitting(true);
-    const success = await login(data.username, data.password);
+    const success = await login(data.email, data.password); // Usar data.email
     if (success) {
+      // O redirecionamento é tratado pelo useEffect acima, mas podemos garantir aqui.
       router.replace("/dashboard");
     } else {
       toast({
         variant: "destructive",
         title: "Falha no Login",
-        description: "Nome de usuário ou senha incorretos.",
+        description: "Email ou senha incorretos. Por favor, tente novamente.",
       });
     }
     setIsSubmitting(false);
@@ -101,17 +102,17 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="username">Admin</Label>
+              <Label htmlFor="email">Email</Label> {/* Mudar para Email */}
               <Input
-                id="username"
-                type="text"
-                placeholder="Seu nome de usuário"
-                {...register("username")}
-                className={errors.username ? "border-destructive" : ""}
+                id="email"
+                type="email" // Mudar tipo para email
+                placeholder="seu@email.com" // Placeholder de email
+                {...register("email")} // Registrar como email
+                className={errors.email ? "border-destructive" : ""}
                 disabled={isSubmitting}
               />
-              {errors.username && (
-                <p className="text-sm text-destructive">{errors.username.message}</p>
+              {errors.email && (
+                <p className="text-sm text-destructive">{errors.email.message}</p>
               )}
             </div>
             <div className="space-y-2">

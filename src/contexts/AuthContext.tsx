@@ -4,88 +4,84 @@
 import type React from 'react';
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { 
+  type User, 
+  signInWithEmailAndPassword, 
+  signOut as firebaseSignOut, 
+  onAuthStateChanged 
+} from 'firebase/auth';
+import { auth } from '@/lib/firebase'; // Import the auth instance
 
 interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (usernameAttempt: string, passwordAttempt: string) => Promise<boolean>;
+  user: User | null; // Expose Firebase user object if needed
+  login: (emailAttempt: string, passwordAttempt: string) => Promise<boolean>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// !!! PROTOTYPE ONLY - INSECURE FOR PRODUCTION !!!
-// Estas credenciais são fixas no código apenas para fins de demonstração deste protótipo.
-// Em uma aplicação real, a autenticação DEVE ser tratada de forma segura em um servidor backend,
-// com senhas armazenadas usando hash e outras práticas de segurança robustas.
-const HARDCODED_USERNAME = "admin";
-const HARDCODED_PASSWORD = "password";
-// !!! END PROTOTYPE ONLY !!!
-
-const AUTH_STORAGE_KEY = "dsystem-auth-status";
+// Comentário:
+// Esta implementação do AuthContext agora usa o Firebase Authentication.
+// A responsabilidade principal pela segurança da autenticação (armazenamento de senhas,
+// gerenciamento de sessão, etc.) foi transferida para o Firebase.
+// Certifique-se de que seu projeto Firebase está configurado corretamente
+// e que as regras de segurança do Firestore/Realtime Database/Storage (se usadas)
+// estão configuradas para proteger seus dados.
 
 export const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const router = useRouter();
 
   useEffect(() => {
-    // Para fins de protótipo, o estado de autenticação é verificado no localStorage.
-    // Isso é conveniente para desenvolvimento, mas pode ter implicações de segurança
-    // se dados sensíveis fossem armazenados ou se vulnerabilidades XSS existissem.
-    try {
-      const storedAuthStatus = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (storedAuthStatus === 'true') {
-        setIsAuthenticated(true);
-      }
-    } catch (error) {
-      console.error("Could not access localStorage for auth status:", error);
-      // Se o localStorage não estiver disponível, o padrão é não autenticado.
-    }
-    setIsLoading(false);
-  }, []);
-
-  const login = useCallback(async (usernameAttempt: string, passwordAttempt: string): Promise<boolean> => {
-    setIsLoading(true);
-    // Simula um atraso de chamada de API
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // !!! PROTOTYPE ONLY - INSECURE !!!
-    // A verificação de login está sendo feita no lado do cliente com credenciais fixas.
-    // NUNCA FAÇA ISSO EM PRODUÇÃO.
-    if (usernameAttempt === HARDCODED_USERNAME && passwordAttempt === HARDCODED_PASSWORD) {
-      setIsAuthenticated(true);
-      try {
-        // Persiste o estado de autenticação no localStorage para o protótipo.
-        localStorage.setItem(AUTH_STORAGE_KEY, 'true');
-      } catch (error) {
-        console.error("Could not set auth status in localStorage:", error);
+    // onAuthStateChanged lida com a persistência da sessão automaticamente
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        setUser(firebaseUser);
+      } else {
+        setUser(null);
       }
       setIsLoading(false);
-      return true;
-    }
-    setIsAuthenticated(false);
-    try {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-    } catch (error) {
-      console.error("Could not remove auth status from localStorage:", error);
-    }
-    setIsLoading(false);
-    return false;
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, []);
 
-  const logout = useCallback(() => {
-    setIsAuthenticated(false);
+  const login = useCallback(async (emailAttempt: string, passwordAttempt: string): Promise<boolean> => {
+    setIsLoading(true);
     try {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
+      await signInWithEmailAndPassword(auth, emailAttempt, passwordAttempt);
+      // onAuthStateChanged irá atualizar o estado do usuário e isLoading
+      // router.replace('/dashboard') é geralmente tratado no useEffect da página de login ou no layout
+      return true;
     } catch (error) {
-      console.error("Could not remove auth status from localStorage:", error);
+      console.error("Firebase login error:", error);
+      setUser(null); 
+      setIsLoading(false);
+      return false;
     }
-    router.push('/login');
+  }, []);
+
+  const logout = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await firebaseSignOut(auth);
+      // onAuthStateChanged irá atualizar o estado do usuário
+      router.push('/login'); // Redireciona após o logout
+    } catch (error) {
+      console.error("Firebase logout error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [router]);
 
+  const isAuthenticated = !!user;
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -98,4 +94,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-
