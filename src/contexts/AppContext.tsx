@@ -5,8 +5,13 @@ import type React from 'react';
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { Product, StockAdjustment, Sale, Nota } from '@/types';
 import { generateId } from '@/lib/utils';
+// MOCK_DATA will now be initialized as empty arrays by default.
 import { MOCK_PRODUCTS, MOCK_STOCK_ADJUSTMENTS, MOCK_SALES, MOCK_NOTAS } from '@/lib/mockData';
 
+const PRODUCTS_STORAGE_KEY = 'dsystem_products';
+const STOCK_ADJUSTMENTS_STORAGE_KEY = 'dsystem_stock_adjustments';
+const SALES_STORAGE_KEY = 'dsystem_sales';
+const NOTAS_STORAGE_KEY = 'dsystem_notas';
 
 interface AppContextType {
   products: Product[];
@@ -33,13 +38,59 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [notas, setNotas] = useState<Nota[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Load data from localStorage on initial mount
   useEffect(() => {
-    setProducts(MOCK_PRODUCTS);
-    setStockAdjustments(MOCK_STOCK_ADJUSTMENTS.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    setSales(MOCK_SALES.sort((a,b) => new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime()));
-    setNotas(MOCK_NOTAS.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    try {
+      const storedProducts = localStorage.getItem(PRODUCTS_STORAGE_KEY);
+      setProducts(storedProducts ? JSON.parse(storedProducts) : MOCK_PRODUCTS);
+
+      const storedStockAdjustments = localStorage.getItem(STOCK_ADJUSTMENTS_STORAGE_KEY);
+      setStockAdjustments(storedStockAdjustments ? JSON.parse(storedStockAdjustments) : MOCK_STOCK_ADJUSTMENTS);
+      
+      const storedSales = localStorage.getItem(SALES_STORAGE_KEY);
+      setSales(storedSales ? JSON.parse(storedSales) : MOCK_SALES);
+
+      const storedNotas = localStorage.getItem(NOTAS_STORAGE_KEY);
+      setNotas(storedNotas ? JSON.parse(storedNotas) : MOCK_NOTAS);
+
+    } catch (error) {
+      console.error("Failed to load data from localStorage", error);
+      // Fallback to empty mock data if parsing fails
+      setProducts(MOCK_PRODUCTS);
+      setStockAdjustments(MOCK_STOCK_ADJUSTMENTS);
+      setSales(MOCK_SALES);
+      setNotas(MOCK_NOTAS);
+    }
     setIsInitialized(true);
   }, []);
+
+  // Save products to localStorage whenever they change
+  useEffect(() => {
+    if (isInitialized) {
+      localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
+    }
+  }, [products, isInitialized]);
+
+  // Save stockAdjustments to localStorage whenever they change
+  useEffect(() => {
+    if (isInitialized) {
+      localStorage.setItem(STOCK_ADJUSTMENTS_STORAGE_KEY, JSON.stringify(stockAdjustments));
+    }
+  }, [stockAdjustments, isInitialized]);
+
+  // Save sales to localStorage whenever they change
+  useEffect(() => {
+    if (isInitialized) {
+      localStorage.setItem(SALES_STORAGE_KEY, JSON.stringify(sales));
+    }
+  }, [sales, isInitialized]);
+
+  // Save notas to localStorage whenever they change
+  useEffect(() => {
+    if (isInitialized) {
+      localStorage.setItem(NOTAS_STORAGE_KEY, JSON.stringify(notas));
+    }
+  }, [notas, isInitialized]);
   
   const getProductById = useCallback((productId: string) => {
     return products.find(p => p.id === productId);
@@ -72,18 +123,23 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             reason: "Estoque Inicial",
             date: newProduct.createdAt,
         };
-        const productForAdjustment = newProduct;
-        const fullInitialAdjustment: StockAdjustment = {
-            ...initialAdjustment,
-            id: generateId(),
-            productName: productForAdjustment.name,
-            createdAt: newProduct.createdAt,
-        };
-        setStockAdjustments(prev => [...prev, fullInitialAdjustment].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-        updateProduct({ ...productForAdjustment, currentStock: productData.initialStock });
+        // Need to update the product's stock immediately for the adjustment logic
+        const productForAdjustment = { ...newProduct, currentStock: productData.initialStock };
+        
+        setStockAdjustments(prev => {
+            const fullInitialAdjustment: StockAdjustment = {
+                ...initialAdjustment,
+                id: generateId(),
+                productName: productForAdjustment.name, // Use name from newly created product
+                createdAt: newProduct.createdAt,
+            };
+            return [...prev, fullInitialAdjustment].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        });
+        // Update the product in the main products list
+        setProducts(prev => prev.map(p => p.id === productForAdjustment.id ? productForAdjustment : p));
     }
     return newProduct;
-  }, [updateProduct]);
+  }, []);
 
 
   const addStockAdjustment = useCallback((adjustmentData: Omit<StockAdjustment, 'id' | 'createdAt' | 'productName'>) => {
@@ -102,11 +158,9 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setStockAdjustments(prev => [...prev, newAdjustment].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     
     const updatedStock = product.currentStock + adjustmentData.quantityChange;
-    if (updatedStock < 0) {
-        console.warn(`Ajuste resultaria em estoque negativo para ${product.name}. Estoque atual: ${product.currentStock}, Mudança: ${adjustmentData.quantityChange}`);
-    }
+    
     const updatedProduct = { ...product, currentStock: updatedStock };
-    updateProduct(updatedProduct);
+    updateProduct(updatedProduct); // This will trigger the useEffect to save products
     return newAdjustment;
   }, [getProductById, updateProduct]);
 
@@ -125,6 +179,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
     setNotas(prev => [...prev, newNota].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     
+    // This will call addStockAdjustment, which updates product stock and saves both adjustments and products
     addStockAdjustment({
       productId: notaData.productId,
       quantityChange: notaData.quantity, 
@@ -154,8 +209,9 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       totalAmount: saleData.quantitySold * saleData.pricePerItem,
       createdAt: new Date().toISOString(),
     };
-    setSales(prev => [...prev, newSale].sort((a,b) => new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime()));
+    setSales(prev => [...prev, newSale].sort((a,b) => new Date(b.saleDate).getTime() - new Date(a.date).getTime()));
 
+    // This will call addStockAdjustment, which updates product stock and saves both adjustments and products
     addStockAdjustment({
         productId: saleData.productId,
         quantityChange: -saleData.quantitySold, 
@@ -166,10 +222,11 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, [getProductById, addStockAdjustment]);
 
   const clearSales = useCallback(() => {
-    setSales([]);
+    setSales([]); // This will trigger the useEffect to save the empty sales array
   }, []);
 
   const deleteProduct = useCallback((productId: string) => {
+    // Order matters here to ensure productName is available if needed for other logs/cleanup before removal
     setProducts(prev => prev.filter(p => p.id !== productId));
     setStockAdjustments(prev => prev.filter(sa => sa.productId !== productId));
     setSales(prev => prev.filter(s => s.productId !== productId));
@@ -178,6 +235,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
 
   if (!isInitialized) {
+    // Render nothing or a loading indicator until data is loaded from localStorage
     return null; 
   }
 
@@ -209,4 +267,3 @@ export const useAppContext = () => {
   }
   return context;
 };
-
