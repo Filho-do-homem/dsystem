@@ -48,7 +48,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils"; // Added missing import
+import { cn } from "@/lib/utils";
 
 const productSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").max(100, "Nome muito longo"),
@@ -95,7 +95,7 @@ export default function StockLevelsPage() {
         sellingPrice: editingProduct.sellingPrice,
         initialStock: editingProduct.currentStock, 
       });
-    } else {
+    } else if (!isEditModalOpen) { // Reset form when modal closes and not editing
       form.reset({ name: "", type: "", barcode: "", costPrice: 0, sellingPrice: 0, initialStock: 0 });
     }
   }, [editingProduct, form, isEditModalOpen]);
@@ -144,10 +144,13 @@ export default function StockLevelsPage() {
     if (!editingProduct) return;
     try {
       const updated: Product = {
-        ...editingProduct,
-        ...data,
+        ...editingProduct, // Preserve existing fields like id, createdAt
+        name: data.name,
+        type: data.type,
         barcode: data.barcode || undefined,
-        currentStock: data.initialStock 
+        costPrice: data.costPrice,
+        sellingPrice: data.sellingPrice,
+        currentStock: data.initialStock // 'initialStock' from form becomes 'currentStock'
       };
       updateProduct(updated);
       toast({ title: "Sucesso", description: "Produto atualizado com sucesso." });
@@ -256,7 +259,10 @@ export default function StockLevelsPage() {
 
       {/* Delete Product Dialog */}
       {productToDelete && (
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={(isOpen) => {
+            setIsDeleteDialogOpen(isOpen);
+            if (!isOpen) setProductToDelete(null);
+        }}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
@@ -286,14 +292,15 @@ export default function StockLevelsPage() {
       <Dialog open={isEditModalOpen} onOpenChange={(isOpen) => {
         setIsEditModalOpen(isOpen);
         if (!isOpen) {
-          setEditingProduct(null); // Clear editing product when closing
+          setEditingProduct(null); 
+          // Form reset is handled by useEffect
         }
       }}>
         <DialogContent className="sm:max-w-lg bg-card">
           <DialogHeader>
             <DialogTitle className="font-headline">Editar Produto</DialogTitle>
             <DialogDescription>
-              Atualize os detalhes do seu produto.
+              Atualize os detalhes do seu produto. O estoque atual será ajustado diretamente.
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -396,5 +403,3 @@ export default function StockLevelsPage() {
     </div>
   );
 }
-
-    
