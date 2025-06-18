@@ -56,7 +56,7 @@ body {
   }
 
   .dark {
-    --background: 240 10% 10%; /* Dark Slate */
+    --background: 203 29% 5%; /* #0A0F12 - Very Dark Blue/Gray */
     --foreground: 252 100% 98%; /* Light text */
 
     --card: 240 10% 12%;
