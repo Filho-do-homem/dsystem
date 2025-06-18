@@ -20,6 +20,7 @@ interface AppContextType {
   getProductById: (productId: string) => Product | undefined;
   getProductByBarcode: (barcode: string) => Product | undefined;
   updateProduct: (updatedProduct: Product) => void;
+  clearSales: () => void; // Nova função
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -101,9 +102,6 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     
     const updatedStock = product.currentStock + adjustmentData.quantityChange;
     if (updatedStock < 0) {
-        // Prevent stock from going negative beyond what a sale might cause
-        // This specific error might be better handled by the calling function (e.g. addSale)
-        // For direct adjustments, we might allow it, but sales should check first.
         console.warn(`Ajuste resultaria em estoque negativo para ${product.name}. Estoque atual: ${product.currentStock}, Mudança: ${adjustmentData.quantityChange}`);
     }
     const updatedProduct = { ...product, currentStock: updatedStock };
@@ -155,7 +153,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       totalAmount: saleData.quantitySold * saleData.pricePerItem,
       createdAt: new Date().toISOString(),
     };
-    setSales(prev => [...prev, newSale].sort((a,b) => new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime()));
+    setSales(prev => [...prev, newSale].sort((a,b) => new Date(b.saleDate).getTime() - new Date(a.date).getTime()));
 
     addStockAdjustment({
         productId: saleData.productId,
@@ -165,6 +163,12 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
     return newSale;
   }, [getProductById, addStockAdjustment]);
+
+  const clearSales = useCallback(() => {
+    setSales([]);
+    // Nota: Os ajustes de estoque relacionados às vendas não são revertidos automaticamente.
+    // Se necessário, essa lógica precisaria ser implementada separadamente.
+  }, []);
 
 
   if (!isInitialized) {
@@ -183,7 +187,8 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         addNota, 
         getProductById, 
         getProductByBarcode,
-        updateProduct 
+        updateProduct,
+        clearSales // Adicionada a função ao contexto
     }}>
       {children}
     </AppContext.Provider>

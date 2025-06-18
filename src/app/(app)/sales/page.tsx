@@ -40,6 +40,17 @@ import {
   DialogClose
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Form,
   FormControl,
   FormField,
@@ -53,7 +64,7 @@ import {
   TabsList, 
   TabsTrigger 
 } from "@/components/ui/tabs";
-import { PlusCircle, CalendarIcon, ScanLine, Trash2, CircleX } from "lucide-react";
+import { PlusCircle, CalendarIcon, ScanLine, Trash2, CircleX, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -71,13 +82,14 @@ const saleSchema = z.object({
 type SaleFormData = z.infer<typeof saleSchema>;
 
 export default function SalesPage() {
-  const { products, sales, addSale, getProductById, getProductByBarcode } = useAppContext();
+  const { products, sales, addSale, getProductById, getProductByBarcode, clearSales } = useAppContext();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = React.useState("manual");
   const [barcodeInput, setBarcodeInput] = React.useState("");
   const [scannedItems, setScannedItems] = React.useState<ScannedItem[]>([]);
   const barcodeInputRef = React.useRef<HTMLInputElement>(null);
+  const [isClearSalesDialogOpen, setIsClearSalesDialogOpen] = React.useState(false);
 
 
   const form = useForm<SaleFormData>({
@@ -253,6 +265,12 @@ export default function SalesPage() {
     [sales]
   );
 
+  const handleConfirmClearSales = () => {
+    clearSales();
+    toast({ title: "Sucesso", description: "Histórico de vendas limpo." });
+    setIsClearSalesDialogOpen(false);
+  };
+
   return (
     <div className="container mx-auto py-2">
       <PageHeader title="Vendas" description="Registre novas vendas e veja o histórico de transações.">
@@ -357,7 +375,39 @@ export default function SalesPage() {
         </TabsContent>
       </Tabs>
       
-      <h2 className="text-2xl font-semibold tracking-tight font-headline my-6">Histórico de Vendas</h2>
+      <div className="flex justify-between items-center my-6">
+        <h2 className="text-2xl font-semibold tracking-tight font-headline">Histórico de Vendas</h2>
+        {sales.length > 0 && (
+            <AlertDialog open={isClearSalesDialogOpen} onOpenChange={setIsClearSalesDialogOpen}>
+                <AlertDialogTrigger asChild>
+                    <Button variant="destructive" className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                        <Trash2 className="mr-2 h-4 w-4" /> Limpar Histórico de Vendas
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center">
+                        <AlertTriangle className="mr-2 h-5 w-5 text-destructive" />
+                        Confirmar Exclusão
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Tem certeza de que deseja limpar todo o histórico de vendas? Esta ação não pode ser desfeita e os dados de vendas serão perdidos permanentemente.
+                        Os ajustes de estoque relacionados a estas vendas não serão revertidos.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                        onClick={handleConfirmClearSales}
+                        className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                    >
+                        Confirmar e Limpar
+                    </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        )}
+      </div>
       <DataTable columns={columns} data={sortedSales} caption="Histórico de transações de venda." />
 
       <Dialog open={isModalOpen} onOpenChange={(isOpen) => {
