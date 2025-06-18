@@ -34,7 +34,6 @@ function Badge({ className, variant, ...props }: BadgeProps) {
   )
 }
 
-// Added cn to export to make it available for StockLevelsPage
-export { Badge, badgeVariants, cn }
+export { Badge, badgeVariants }
 
     
