@@ -50,7 +50,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
 ];
 
-export const MOCK_STOCK_ADJUSTMENTS: StockAdjustment[] = [
+export let MOCK_STOCK_ADJUSTMENTS: StockAdjustment[] = [
   {
     id: generateId(),
     productId: 'prod_1',
@@ -98,7 +98,7 @@ export const MOCK_STOCK_ADJUSTMENTS: StockAdjustment[] = [
   },
 ];
 
-export const MOCK_SALES: Sale[] = [
+export let MOCK_SALES: Sale[] = [
   {
     id: generateId(),
     productId: 'prod_1',
@@ -131,7 +131,7 @@ export const MOCK_SALES: Sale[] = [
   },
 ];
 
-export const MOCK_NOTAS: Nota[] = [
+export let MOCK_NOTAS: Nota[] = [
   {
     id: generateId(),
     productId: 'prod_1',
@@ -153,57 +153,121 @@ export const MOCK_NOTAS: Nota[] = [
 ];
 
 
-// Initialize MOCK_PRODUCTS currentStock based on adjustments and sales
+// IIFE to initialize/synchronize MOCK_PRODUCTS currentStock and related data
 (() => {
-  const productStockMap = new Map<string, number>();
+  const productLookup = new Map<string, { name: string }>();
+  MOCK_PRODUCTS.forEach(p => productLookup.set(p.id, { name: p.name }));
 
-  MOCK_PRODUCTS.forEach(p => {
-    productStockMap.set(p.id, 0); // Start with 0 stock
+  // Update productNames and filter orphaned data from MOCK_STOCK_ADJUSTMENTS
+  const validStockAdjustments: StockAdjustment[] = [];
+  MOCK_STOCK_ADJUSTMENTS.forEach(adj => {
+    const product = productLookup.get(adj.productId);
+    if (product) {
+      adj.productName = product.name;
+      validStockAdjustments.push(adj);
+    }
   });
-  
-  // Apply all stock adjustments (Initial Stock, New Batch, etc.)
+  MOCK_STOCK_ADJUSTMENTS.length = 0;
+  MOCK_STOCK_ADJUSTMENTS.push(...validStockAdjustments);
+
+  // Update productNames and filter orphaned data from MOCK_SALES
+  const validSales: Sale[] = [];
+  MOCK_SALES.forEach(sale => {
+    const product = productLookup.get(sale.productId);
+    if (product) {
+      sale.productName = product.name;
+      validSales.push(sale);
+    }
+  });
+  MOCK_SALES.length = 0;
+  MOCK_SALES.push(...validSales);
+
+  // Update productNames and filter orphaned data from MOCK_NOTAS
+  const validNotas: Nota[] = [];
+  MOCK_NOTAS.forEach(nota => {
+    const product = productLookup.get(nota.productId);
+    if (product) {
+      nota.productName = product.name;
+      validNotas.push(nota);
+    }
+  });
+  MOCK_NOTAS.length = 0;
+  MOCK_NOTAS.push(...validNotas);
+
+  // --- Recalculate stock based on the now consistent data ---
+  const productStockMap = new Map<string, number>();
+  MOCK_PRODUCTS.forEach(p => productStockMap.set(p.id, 0));
+
+  // Apply all adjustments from the (now filtered and name-updated) MOCK_STOCK_ADJUSTMENTS array.
+  // This array should contain initial stock, manual adjustments, and potentially entries from previous calculations for sales/notas.
   MOCK_STOCK_ADJUSTMENTS.forEach(adj => {
     productStockMap.set(adj.productId, (productStockMap.get(adj.productId) || 0) + adj.quantityChange);
   });
 
-  // Apply stock entries from Notas
+  // Ensure MOCK_STOCK_ADJUSTMENTS contains entries for all MOCK_NOTAS.
+  // If an adjustment for a nota isn't found in MOCK_STOCK_ADJUSTMENTS, add it and update the map.
   MOCK_NOTAS.forEach(nota => {
-    const existingAdjustmentForNota = MOCK_STOCK_ADJUSTMENTS.find(
-      sa => sa.productId === nota.productId && sa.date === nota.date && sa.quantityChange === nota.quantity && sa.reason === "Entrada por Nota"
-    );
-    if (!existingAdjustmentForNota) {
+    const product = productLookup.get(nota.productId); // Product is guaranteed to exist due to filtering
+    if (product) {
+      const hasNotaAdjustment = MOCK_STOCK_ADJUSTMENTS.some(
+        sa => sa.productId === nota.productId &&
+              sa.reason === "Entrada por Nota" &&
+              sa.quantityChange === nota.quantity &&
+              new Date(sa.date).toISOString().substring(0,10) === new Date(nota.date).toISOString().substring(0,10) // Compare date part only
+      );
+
+      if (!hasNotaAdjustment) {
         const stockAdjustmentFromNota: StockAdjustment = {
             id: generateId(),
             productId: nota.productId,
-            productName: nota.productName,
+            productName: product.name,
             quantityChange: nota.quantity,
             reason: "Entrada por Nota",
             date: nota.date,
             createdAt: nota.createdAt,
         };
         MOCK_STOCK_ADJUSTMENTS.push(stockAdjustmentFromNota);
+        // Update map as this adjustment wasn't part of the initial MOCK_STOCK_ADJUSTMENTS pass
         productStockMap.set(nota.productId, (productStockMap.get(nota.productId) || 0) + nota.quantity);
+      }
     }
   });
 
-  // Deduct sales from stock
+  // Ensure MOCK_STOCK_ADJUSTMENTS contains entries for all MOCK_SALES.
+  // If an adjustment for a sale isn't found, add it and update the map.
   MOCK_SALES.forEach(sale => {
-    productStockMap.set(sale.productId, (productStockMap.get(sale.productId) || 0) - sale.quantitySold);
-    // Add stock adjustment for sale
-    const saleAdjustment: StockAdjustment = {
-      id: generateId(),
-      productId: sale.productId,
-      productName: sale.productName,
-      quantityChange: -sale.quantitySold,
-      reason: `Venda ID: ${sale.id.substring(0,4)}`,
-      date: sale.saleDate,
-      createdAt: sale.createdAt,
-    };
-    MOCK_STOCK_ADJUSTMENTS.push(saleAdjustment);
+    const product = productLookup.get(sale.productId); // Product is guaranteed to exist
+    if (product) {
+      const saleReasonPrefix = `Venda ID: ${sale.id.substring(0,4)}`;
+      const hasSaleAdjustment = MOCK_STOCK_ADJUSTMENTS.some(
+        sa => sa.productId === sale.productId &&
+              sa.reason.startsWith(saleReasonPrefix) &&
+              sa.quantityChange === -sale.quantitySold &&
+              new Date(sa.date).toISOString().substring(0,10) === new Date(sale.saleDate).toISOString().substring(0,10) // Compare date part only
+      );
+
+      if (!hasSaleAdjustment) {
+        const saleAdjustment: StockAdjustment = {
+          id: generateId(),
+          productId: sale.productId,
+          productName: product.name,
+          quantityChange: -sale.quantitySold,
+          reason: saleReasonPrefix,
+          date: sale.saleDate,
+          createdAt: sale.createdAt,
+        };
+        MOCK_STOCK_ADJUSTMENTS.push(saleAdjustment);
+        // Update map
+        productStockMap.set(sale.productId, (productStockMap.get(sale.productId) || 0) - sale.quantitySold);
+      }
+    }
   });
 
-  // Update product currentStock
+  // Final pass: Update product.currentStock from the map, which now reflects ALL movements.
   MOCK_PRODUCTS.forEach(p => {
     p.currentStock = productStockMap.get(p.id) || 0;
   });
+
+  // Sort MOCK_STOCK_ADJUSTMENTS by date descending as AppContext expects it sorted for initial load.
+  MOCK_STOCK_ADJUSTMENTS.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 })();
