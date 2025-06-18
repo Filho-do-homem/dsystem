@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -7,6 +8,20 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable, type ColumnDefinition } from "@/components/common/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Trash2, AlertTriangle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -16,9 +31,12 @@ import {
 } from "@/components/ui/select";
 
 export default function StockLevelsPage() {
-  const { products } = useAppContext();
+  const { products, deleteProduct } = useAppContext();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedType, setSelectedType] = React.useState<string>("all");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [productToDelete, setProductToDelete] = React.useState<Product | null>(null);
 
   const productTypes = React.useMemo(() => {
     const types = new Set(products.map(p => p.type));
@@ -37,6 +55,22 @@ export default function StockLevelsPage() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [products, searchTerm, selectedType]);
 
+  const handleDeleteClick = (product: Product) => {
+    setProductToDelete(product);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (productToDelete) {
+      deleteProduct(productToDelete.id);
+      toast({
+        title: "Produto Excluído",
+        description: `O produto "${productToDelete.name}" e todos os seus dados associados foram excluídos.`,
+      });
+      setProductToDelete(null);
+      setIsDeleteDialogOpen(false);
+    }
+  };
 
   const columns: ColumnDefinition<Product>[] = [
     { accessorKey: "name", header: "Nome do Produto", size: 300 },
@@ -71,7 +105,22 @@ export default function StockLevelsPage() {
       header: "Valor Total Estoque (Custo)",
       size: 200,
       cell: (row) => `R$${(row.currentStock * row.costPrice).toFixed(2)}`
-    }
+    },
+    {
+      accessorKey: "actions",
+      header: "Ações",
+      size: 80,
+      cell: (row) => (
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => handleDeleteClick(row)}
+          className="text-destructive hover:text-destructive/80"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      ),
+    },
   ];
 
   return (
@@ -100,6 +149,34 @@ export default function StockLevelsPage() {
       </div>
 
       <DataTable columns={columns} data={filteredProducts} caption="Níveis de estoque atuais." />
+
+      {productToDelete && (
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center">
+                <AlertTriangle className="mr-2 h-5 w-5 text-destructive" />
+                Confirmar Exclusão
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza de que deseja excluir o produto "{productToDelete.name}"? 
+                Esta ação é irreversível e removerá permanentemente o produto e todos os seus dados associados 
+                (histórico de estoque, vendas, notas de entrada).
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setProductToDelete(null)}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDelete}
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              >
+                Confirmar Exclusão
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }
+

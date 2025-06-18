@@ -20,7 +20,8 @@ interface AppContextType {
   getProductById: (productId: string) => Product | undefined;
   getProductByBarcode: (barcode: string) => Product | undefined;
   updateProduct: (updatedProduct: Product) => void;
-  clearSales: () => void; // Nova função
+  deleteProduct: (productId: string) => void;
+  clearSales: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -153,7 +154,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       totalAmount: saleData.quantitySold * saleData.pricePerItem,
       createdAt: new Date().toISOString(),
     };
-    setSales(prev => [...prev, newSale].sort((a,b) => new Date(b.saleDate).getTime() - new Date(a.date).getTime()));
+    setSales(prev => [...prev, newSale].sort((a,b) => new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime()));
 
     addStockAdjustment({
         productId: saleData.productId,
@@ -166,8 +167,13 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const clearSales = useCallback(() => {
     setSales([]);
-    // Nota: Os ajustes de estoque relacionados às vendas não são revertidos automaticamente.
-    // Se necessário, essa lógica precisaria ser implementada separadamente.
+  }, []);
+
+  const deleteProduct = useCallback((productId: string) => {
+    setProducts(prev => prev.filter(p => p.id !== productId));
+    setStockAdjustments(prev => prev.filter(sa => sa.productId !== productId));
+    setSales(prev => prev.filter(s => s.productId !== productId));
+    setNotas(prev => prev.filter(n => n.productId !== productId));
   }, []);
 
 
@@ -188,7 +194,8 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         getProductById, 
         getProductByBarcode,
         updateProduct,
-        clearSales // Adicionada a função ao contexto
+        deleteProduct,
+        clearSales
     }}>
       {children}
     </AppContext.Provider>
@@ -202,3 +209,4 @@ export const useAppContext = () => {
   }
   return context;
 };
+
