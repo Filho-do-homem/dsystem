@@ -232,7 +232,14 @@ export default function StockLevelsPage() {
 
   return (
     <div className="container mx-auto py-2">
-      <PageHeader title="Níveis de Estoque" description="Veja os níveis de estoque atuais para todos os produtos." />
+      <PageHeader title="Níveis de Estoque" description="Veja os níveis de estoque atuais para todos os produtos.">
+        <Button 
+            onClick={() => toast({ title: "Informação", description: "Todas as alterações são salvas automaticamente ao editar ou excluir itens."})}
+            className="bg-accent hover:bg-accent/90 text-accent-foreground"
+        >
+            Salvar Alterações na Página
+        </Button>
+      </PageHeader>
 
       <div className="mb-4 flex flex-col sm:flex-row gap-4">
         <Input 
@@ -403,3 +410,5 @@ export default function StockLevelsPage() {
     </div>
   );
 }
+
+    
