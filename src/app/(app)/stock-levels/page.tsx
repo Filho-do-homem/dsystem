@@ -12,7 +12,7 @@ import { DataTable, type ColumnDefinition } from "@/components/common/DataTable"
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash2, AlertTriangle, Edit2, ScanBarcode, FileDown } from "lucide-react";
+import { Trash2, AlertTriangle, Edit2, ScanBarcode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Card,
@@ -169,58 +169,6 @@ export default function StockLevelsPage() {
     }
   };
   
-  const handleExportToCSV = () => {
-    if (products.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "Nenhum Produto",
-        description: "Não há produtos para exportar.",
-      });
-      return;
-    }
-
-    const headers = ["Produto", "Quantidade"];
-    
-    const formatCSVField = (field: any) => {
-      if (field === null || field === undefined) {
-        return '""';
-      }
-      const str = String(field);
-      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-        return `"${str.replace(/"/g, '""')}"`;
-      }
-      return str;
-    };
-
-    const csvRows = [
-      headers.join(','),
-      ...products.map(p => 
-        [
-          p.name,
-          p.currentStock,
-        ].map(formatCSVField).join(',')
-      )
-    ];
-
-    const csvContent = csvRows.join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    const date = new Date().toISOString().slice(0, 10);
-    link.setAttribute('download', `relatorio_estoque_${date}.csv`);
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    toast({
-        title: "Exportação Concluída",
-        description: "O arquivo CSV com o estoque foi baixado."
-    });
-  };
-
   const columns: ColumnDefinition<Product>[] = [
     { accessorKey: "name", header: "Nome do Produto", size: 300 },
     { accessorKey: "type", header: "Tipo", size: 150 },
@@ -291,15 +239,7 @@ export default function StockLevelsPage() {
 
   return (
     <div className="container mx-auto py-2">
-      <PageHeader title="Níveis de Estoque" description="Veja os níveis de estoque atuais para todos os produtos.">
-        <Button 
-            onClick={handleExportToCSV}
-            className="bg-accent hover:bg-accent/90 text-accent-foreground"
-        >
-            <FileDown className="mr-2 h-4 w-4" />
-            Exportar para Planilha
-        </Button>
-      </PageHeader>
+      <PageHeader title="Níveis de Estoque" description="Veja os níveis de estoque atuais para todos os produtos." />
 
       <div className="mb-4 flex flex-col sm:flex-row gap-4">
         <Input 
@@ -487,4 +427,5 @@ export default function StockLevelsPage() {
     
 
     
+
 
