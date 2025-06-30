@@ -15,6 +15,13 @@ import { Button } from "@/components/ui/button";
 import { Trash2, AlertTriangle, Edit2, ScanBarcode, FileDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -315,7 +322,21 @@ export default function StockLevelsPage() {
         </Select>
       </div>
 
-      <DataTable columns={columns} data={filteredProducts} caption="Níveis de estoque atuais." />
+      <Card>
+        <CardHeader>
+            <CardTitle>Visão Geral do Estoque</CardTitle>
+            <CardDescription>
+                Filtre e gerencie os detalhes e quantidades de cada produto.
+            </CardDescription>
+        </CardHeader>
+        <CardContent>
+            <DataTable 
+                columns={columns} 
+                data={filteredProducts} 
+                emptyStateMessage="Nenhum produto encontrado. Tente ajustar sua busca ou filtros." 
+            />
+        </CardContent>
+      </Card>
 
       {/* Delete Product Dialog */}
       {productToDelete && (
@@ -466,3 +487,4 @@ export default function StockLevelsPage() {
     
 
     
+
