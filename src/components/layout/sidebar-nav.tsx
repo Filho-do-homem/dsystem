@@ -10,7 +10,8 @@ import {
   ShoppingCart, 
   BarChartHorizontalBig,
   FileText,
-  LogOut, // Import LogOut icon
+  LogOut,
+  ClipboardList, // Importar ícone de Relatórios
   type LucideIcon
 } from "lucide-react"
 
@@ -28,7 +29,7 @@ import { Button } from '@/components/ui/button'
 import { SheetTitle } from "@/components/ui/sheet"
 import { useSidebar } from "@/components/ui/sidebar"
 import type React from 'react';
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
+import { useAuth } from "@/contexts/AuthContext"; 
 
 interface NavItem {
   href: string
@@ -38,6 +39,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: "/dashboard", label: "Painel", icon: LayoutDashboard },
+  { href: "/reports", label: "Relatórios", icon: ClipboardList },
   { href: "/products", label: "Produtos", icon: Package },
   { href: "/notas", label: "Notas", icon: FileText },
   { href: "/stock-adjustments", label: "Ajustes de Estoque", icon: ArchiveRestore },
