@@ -171,24 +171,13 @@ export default function StockLevelsPage() {
       return;
     }
 
-    const headers = [
-      "ID",
-      "Nome",
-      "Tipo",
-      "Cód. Barras",
-      "Preço de Custo (R$)",
-      "Preço de Venda (R$)",
-      "Estoque Atual",
-      "Data de Criação"
-    ];
+    const headers = ["Produto", "Quantidade"];
     
-    // Helper to format CSV fields: handles commas and quotes.
     const formatCSVField = (field: any) => {
       if (field === null || field === undefined) {
         return '""';
       }
       const str = String(field);
-      // If the field contains a comma, a quote, or a newline, wrap it in double quotes.
       if (str.includes(',') || str.includes('"') || str.includes('\n')) {
         return `"${str.replace(/"/g, '""')}"`;
       }
@@ -199,14 +188,8 @@ export default function StockLevelsPage() {
       headers.join(','),
       ...products.map(p => 
         [
-          p.id,
           p.name,
-          p.type,
-          p.barcode || 'N/A',
-          p.costPrice.toFixed(2),
-          p.sellingPrice.toFixed(2),
           p.currentStock,
-          new Date(p.createdAt).toLocaleString('pt-BR')
         ].map(formatCSVField).join(',')
       )
     ];
@@ -217,7 +200,7 @@ export default function StockLevelsPage() {
     const link = document.createElement('a');
     link.setAttribute('href', url);
     const date = new Date().toISOString().slice(0, 10);
-    link.setAttribute('download', `relatorio_produtos_${date}.csv`);
+    link.setAttribute('download', `relatorio_estoque_${date}.csv`);
     
     document.body.appendChild(link);
     link.click();
@@ -226,7 +209,7 @@ export default function StockLevelsPage() {
     
     toast({
         title: "Exportação Concluída",
-        description: "O arquivo CSV com os produtos foi baixado."
+        description: "O arquivo CSV com o estoque foi baixado."
     });
   };
 
