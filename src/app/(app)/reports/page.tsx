@@ -8,7 +8,8 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, Package, DollarSign, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, TrendingDown, Package, DollarSign, AlertCircle, FileDown } from "lucide-react";
 
 interface ProductSaleData {
   productId: string;
@@ -68,6 +69,76 @@ export default function ReportsPage() {
     return { highestMarginProducts };
   }, [products]);
 
+  const handleDownloadReports = () => {
+    const formatCurrency = (value: number) => `R$${value.toFixed(2)}`;
+
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // Add BOM for Excel compatibility
+    csvContent += "Relatório Geral D'System\r\n";
+    csvContent += `Data de Emissão: ${new Date().toLocaleString('pt-BR')}\r\n\r\n`;
+
+    // Resumo de Vendas
+    csvContent += "Resumo de Vendas\r\n";
+    csvContent += "Métrica,Valor\r\n";
+    csvContent += `Receita Total,${formatCurrency(salesReport.totalRevenue)}\r\n`;
+    csvContent += `Total de Vendas,${salesReport.totalSalesCount}\r\n\r\n`;
+
+    // Resumo de Estoque
+    csvContent += "Resumo de Estoque\r\n";
+    csvContent += "Métrica,Valor\r\n";
+    csvContent += `Valor do Estoque (Custo),${formatCurrency(stockReport.totalStockValue)}\r\n`;
+    csvContent += `Itens em Estoque,${stockReport.totalStockItems}\r\n\r\n`;
+    
+    // Mais Vendidos (Quantidade)
+    csvContent += "Mais Vendidos (por Quantidade)\r\n";
+    csvContent += "Produto,Unidades Vendidas\r\n";
+    salesReport.bestSellingByQuantity.forEach(p => {
+      csvContent += `${p.name},${p.quantity}\r\n`;
+    });
+    csvContent += "\r\n";
+
+    // Mais Vendidos (Receita)
+    csvContent += "Mais Vendidos (por Receita)\r\n";
+    csvContent += "Produto,Receita\r\n";
+    salesReport.bestSellingByRevenue.forEach(p => {
+      csvContent += `${p.name},${formatCurrency(p.revenue)}\r\n`;
+    });
+    csvContent += "\r\n";
+
+    // Maior Margem de Lucro
+    csvContent += "Produtos com Maior Margem de Lucro\r\n";
+    csvContent += "Produto,Margem\r\n";
+    productPerformanceReport.highestMarginProducts.forEach(p => {
+      csvContent += `${p.name},${formatCurrency(p.margin)}\r\n`;
+    });
+    csvContent += "\r\n";
+
+    // Estoque Baixo
+    csvContent += "Produtos com Estoque Baixo\r\n";
+    csvContent += "Produto,Estoque Atual\r\n";
+    stockReport.lowStockProducts.forEach(p => {
+      csvContent += `${p.name},${p.currentStock}\r\n`;
+    });
+    csvContent += "\r\n";
+
+    // Esgotados
+    csvContent += "Produtos Esgotados\r\n";
+    csvContent += "Produto,Estoque Atual\r\n";
+    stockReport.outOfStockProducts.forEach(p => {
+      csvContent += `${p.name},${p.currentStock}\r\n`;
+    });
+    csvContent += "\r\n";
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    link.setAttribute("download", `relatorio_dsystem_${timestamp}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+
   const renderProductList = (list: {name: string, quantity?: number, revenue?: number, margin?: number, stock?: number}[], valueLabel: string, valueField: 'quantity' | 'revenue' | 'margin' | 'stock', isCurrency = false) => {
     if (list.length === 0) {
       return <p className="text-sm text-muted-foreground text-center py-4">Nenhum dado para exibir.</p>;
@@ -96,7 +167,12 @@ export default function ReportsPage() {
 
   return (
     <div className="container mx-auto py-2">
-      <PageHeader title="Relatórios" description="Análise de desempenho de vendas, estoque e produtos." />
+      <PageHeader title="Relatórios" description="Análise de desempenho de vendas, estoque e produtos.">
+        <Button onClick={handleDownloadReports}>
+          <FileDown className="mr-2 h-4 w-4" />
+          Baixar Relatórios
+        </Button>
+      </PageHeader>
 
       <div className="grid gap-8 md:grid-cols-1 lg:grid-cols-2">
         {/* Sales Report Card */}
